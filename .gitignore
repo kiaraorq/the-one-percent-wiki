@@ -1,0 +1,33 @@
+# ── Secrets ──────────────────────────────────────────────────────────
+# Never commit your API key. (.env.example IS committed as the template.)
+.env
+
+# ── Paid research data ───────────────────────────────────────────────
+# The database holds research you paid for — keep it OUT of git and
+# back it up separately (cloud drive, external disk). SQLite also
+# creates temporary sidecar files while the script runs.
+wctc.db
+*.db-journal
+*.db-wal
+*.db-shm
+
+# ── Generated outputs ────────────────────────────────────────────────
+# All of these are recreated anytime with `export` / `export-json`,
+# so they don't belong in version control.
+WCTC_Research_Report.md
+wctc_results.csv
+wctc_data.json
+wctc_data.js
+
+# ── Python ───────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.idea
+# ── Node (only appears if you ever npm-install something locally) ────
+node_modules/
+
+# ── OS clutter ───────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
