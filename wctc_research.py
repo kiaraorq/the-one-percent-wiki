@@ -52,53 +52,87 @@ a competitor in the World Cup Trading Championships (WCTC / Robbins World Cup).
 Their verified competition record (from the official leaderboards) is:
 {record}
 
-Produce the report in EXACTLY four sections, each starting with the exact marker \
-line shown below (these markers are parsed by software — reproduce them verbatim, \
-each on its own line):
+Return your report as a single JSON object matching the response schema, with \
+these six fields. Extract the information and format it as specified in the \
+schema — return ONLY the JSON object, no prose before or after it.
 
-<<<BIOGRAPHY>>>
+"biography":
 A CONCISE biography: strictly 1–2 short paragraphs maximum. Who they are, country, \
 trading style/instruments, and the essence of their championship record. No lists, \
-no links here. Brevity is mandatory for this section only.
+no links here. Brevity is mandatory for this field only.
 
-<<<STUDIES>>>
-What they studied to become this good. Structure: FIRST a short explanation (1-2 \
-paragraphs) of their education, mentors, methodologies and trading approach. THEN a \
-LONG bullet list — as many entries as you can verify — of the concrete resources \
-behind that: every book, paper, course, mentor's work, methodology guide or \
-influence. EVERY bullet must be a markdown hyperlink to the resource, formatted \
-like: - [Resource title](https://url) — one-line note on why it matters. Do not \
-list bare URLs; embed every link inside the resource name.
+"country":
+A single country name (e.g. "United States", "Italy", "Spain"). If genuinely \
+unverifiable, write exactly: Unknown
 
-<<<TEACHES>>>
-What they teach, sell, or share with others. Structure: FIRST a short explanation \
-(1-2 paragraphs) of how this person shares knowledge. THEN a LONG bullet list — as \
-exhaustive as possible — of every course, authored book, YouTube channel, \
-newsletter, signal service, website, podcast appearance, interview, blog, or \
-mentorship program they offer. EVERY bullet must be a markdown hyperlink: \
-- [Resource title](https://url) — one-line note (include price when findable).
+"tags":
+An array of 4-10 lowercase hyphenated tags for filtering. Choose from this \
+vocabulary where applicable — futures, forex, stocks, options, day-trading, \
+swing-trading, systematic, algorithmic, discretionary, technical-analysis, \
+fundamental, author, educator, fund-manager, multiple-wins — and add any other \
+short, hyphenated tags that genuinely describe this person. Only include tags \
+supported by your research.
 
-<<<FREE_RESOURCES>>>
-Free alternatives to learn the same topics. Structure: FIRST a short explanation \
-(1-2 paragraphs) of what skills/topics the free roadmap covers. THEN a LONG bullet \
-list — as many high-quality entries as possible — of FREE resources: free courses, \
-YouTube channels, public-domain books, university OCW, broker education portals, \
-open-source tools. EVERY bullet must be a markdown hyperlink: \
-- [Resource title](https://url) — one-line note on what it teaches.
+"studies":
+The education that made them this good — the goal of this section is that the \
+reader can GET THE SAME EDUCATION this trader had. Structure: FIRST a short \
+explanation (1-2 paragraphs). THEN — MANDATORY — end the section with a long \
+bullet list, MINIMUM 10 entries, more is better, every bullet a markdown \
+hyperlink: - [Resource title](https://url) — one-line note on why it matters.
+Every link must point to the LEARNING MATERIAL ITSELF: the books they read, the \
+institutions or programs they attended, their mentors' published works, papers, \
+methodologies, indicator documentation. If person-specific sources run out before \
+10 entries, CONTINUE with the canonical learning resources for their trading \
+discipline, introduced with "Canonical resources for this discipline:". An \
+incomplete list is NOT acceptable; a clearly-labeled discipline-level list is.
+
+"teaches":
+Everything this trader has made available for the public to learn from, free or \
+paid. Structure: FIRST a short explanation (1-2 paragraphs). THEN — MANDATORY — a \
+bullet list, MINIMUM 8 entries, more is better, every bullet a markdown hyperlink \
+with a one-line note (include prices when findable). Valid entries: their courses, \
+authored books, YouTube channels, newsletters, signal services, educational \
+websites, webinars, and interviews or podcast episodes WHERE THEY EXPLAIN THEIR \
+METHODS (label those as interviews). If verified offerings run out before 8, \
+CONTINUE with educational offerings from other VERIFIED champions of the same \
+discipline, introduced with "From other champions of this discipline:". Never \
+attribute a course to this person unless verified — but never leave the list short.
+
+"free_resources":
+Free ways to learn the same skills this trader studied or teaches. Structure: \
+FIRST a short explanation (1-2 paragraphs) of what skills the free roadmap \
+covers. THEN — MANDATORY — a long bullet list, MINIMUM 15 entries, more is \
+better: free courses, YouTube channels, public-domain books, university OCW, \
+broker/exchange education portals, open-source tools. Every bullet a markdown \
+hyperlink with a one-line note on what it teaches.
+
+LINK QUALITY RULES — these override everything else:
+- Every single link in every list must be something the reader can STUDY FROM: a \
+course, book, video channel, paper, documentation, or structured lesson.
+- BANNED as list entries (they teach nothing): the World Cup Trading \
+Championships website and any of its pages (home, standings, leaderboards, \
+historical results, rules); broker/contest promotion pages; social media \
+promotional posts (Instagram, Facebook, X); news articles that merely report \
+results; generic profile or biography pages. The reader already knows this \
+person is a champion — do not link to proof of it.
+- No bare URLs, and no citation footnote markers like [1] or [12] inside the \
+lists — each bullet stands alone as [Title](url) — note.
 
 Rules:
-- Only include real, working links from your research; never invent URLs. Every \
-factual claim should be backed by the linked sources themselves.
-- The bullet lists are the heart of this report: make them as long as the evidence \
-allows. More verified resources is always better.
-- If little or nothing is publicly known about this person, say so explicitly in \
-the affected sections rather than inventing anything, and still complete \
-<<<FREE_RESOURCES>>> based on the discipline they competed in (futures, forex, etc.).
+- Only include real, working links found in your research; NEVER invent URLs. If \
+you cannot verify a link, leave it out and find another real one instead.
+- The resource lists at the end of each section are the ENTIRE PURPOSE of this \
+report. A section without its list is a failed section. Meet every minimum; \
+exceed it whenever the evidence allows.
+- The fallback tiers exist so honesty and completeness can coexist: never \
+fabricate person-specific claims, and never deliver a short list.
 - The biography must stay short; the other three sections should be extensive.
 """
 
 SECTION_KEYS = {          # marker -> db column
     "BIOGRAPHY": "bio_md",
+    "COUNTRY": "country",
+    "TAGS": "tags",
     "STUDIES": "studies_md",
     "TEACHES": "teaches_md",
     "FREE_RESOURCES": "free_md",
@@ -136,6 +170,7 @@ def get_db():
             record TEXT NOT NULL,           -- their rows from the CSV, formatted
             status TEXT NOT NULL DEFAULT 'pending',  -- pending | done | error
             report_md TEXT,                 -- full raw model output (backup)
+            full_response TEXT,             -- complete raw API response (always saved)
             bio_md TEXT,                    -- concise biography (1-2 paragraphs)
             studies_md TEXT,                -- what they studied (extensive markdown)
             teaches_md TEXT,                -- what they teach/sell/share (extensive)
@@ -148,7 +183,8 @@ def get_db():
         )""")
     # migrate older databases: add newer columns, drop the removed citations column
     existing = {r["name"] for r in con.execute("PRAGMA table_info(people)")}
-    for col in ("bio_md", "studies_md", "teaches_md", "free_md", "request_id"):
+    for col in ("bio_md", "studies_md", "teaches_md", "free_md", "request_id",
+                "country", "tags", "full_response"):
         if col not in existing:
             con.execute(f"ALTER TABLE people ADD COLUMN {col} TEXT")
     if "citations" in existing:
@@ -169,6 +205,33 @@ def normalize_name(raw: str) -> str:
     return s
 
 
+# tags derivable for free from the Event column of the CSV
+EVENT_TAG_RULES = [
+    ("forex", "forex"),
+    ("futures", "futures"),
+    ("day trading", "day-trading"),
+    ("stock", "stocks"),
+    ("option", "options"),
+    ("global cup", "global-cup"),
+    ("quarterly", "quarterly"),
+]
+
+
+def tags_from_events(events) -> set:
+    tags = set()
+    for ev in events:
+        low = ev.lower()
+        for needle, tag in EVENT_TAG_RULES:
+            if needle in low:
+                tags.add(tag)
+    return tags
+
+
+def merge_tags(existing: str | None, new: set) -> str:
+    cur = {t.strip().lower() for t in (existing or "").split(",") if t.strip()}
+    return ",".join(sorted(cur | {t.lower() for t in new}))
+
+
 # --------------------------------------------------------------------------- init
 
 def cmd_init(csv_path: str):
@@ -176,10 +239,12 @@ def cmd_init(csv_path: str):
     with open(csv_path, newline="", encoding="utf-8-sig") as f:
         rows = list(csv.DictReader(f))
     people = {}
+    events = {}
     for r in rows:
         name = normalize_name(r["Name"])
         line = f"- {r['Year']}: {r['Event']} — {r['Place']} place, {r['Percentage']}% net return"
         people.setdefault(name, [])
+        events.setdefault(name, set()).add(r["Event"])
         if line not in people[name]:          # CSV has some duplicated rows
             people[name].append(line)
     added = 0
@@ -191,9 +256,15 @@ def cmd_init(csv_path: str):
         # keep record fresh for already-known, still-pending people
         con.execute(
             "UPDATE people SET record=? WHERE name=? AND status='pending'", (record, name))
+        # event-derived tags are free: merge them for EVERYONE (never removes
+        # tags, so research-derived tags on finished people are preserved)
+        row = con.execute("SELECT tags FROM people WHERE name=?", (name,)).fetchone()
+        con.execute("UPDATE people SET tags=? WHERE name=?",
+                    (merge_tags(row["tags"], tags_from_events(events[name])), name))
     con.commit()
     total = con.execute("SELECT COUNT(*) c FROM people").fetchone()["c"]
-    print(f"Loaded {len(rows)} rows -> {total} unique people ({added} new).")
+    print(f"Loaded {len(rows)} rows -> {total} unique people ({added} new). "
+          f"Event-derived tags applied to everyone.")
 
 
 # ---------------------------------------------------------------------------- api
@@ -212,10 +283,38 @@ def _headers(api_key):
     return {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
 
 
+RESPONSE_SCHEMA = {
+    "type": "json_schema",
+    "json_schema": {
+        "name": "trader_research_report",
+        "schema": {
+            "type": "object",
+            "properties": {
+                "biography":     {"type": "string",
+                                  "description": "Concise 1-2 paragraph biography, markdown, no links"},
+                "country":       {"type": "string",
+                                  "description": "Single country name, or 'Unknown'"},
+                "tags":          {"type": "array", "items": {"type": "string"},
+                                  "description": "4-10 lowercase hyphenated filtering tags"},
+                "studies":       {"type": "string",
+                                  "description": "Markdown: short explanation then long bullet list of hyperlinked learning resources"},
+                "teaches":       {"type": "string",
+                                  "description": "Markdown: short explanation then long bullet list of everything this person offers, hyperlinked"},
+                "free_resources": {"type": "string",
+                                  "description": "Markdown: short explanation then long bullet list of free hyperlinked resources"},
+            },
+            "required": ["biography", "country", "tags",
+                         "studies", "teaches", "free_resources"],
+        },
+    },
+}
+
+
 def submit_job(prompt: str, api_key: str) -> str:
     """Submit an async deep research job; returns the request_id immediately."""
     payload = {"model": MODEL,
                "reasoning_effort": REASONING_EFFORT,
+               "response_format": RESPONSE_SCHEMA,
                "messages": [{"role": "user", "content": prompt}]}
     body = {"request": payload}
     resp = requests.post(ASYNC_URL, headers=_headers(api_key), json=body, timeout=120)
@@ -281,23 +380,90 @@ def extract(data: dict):
     return text, (cost or None)
 
 
+def parse_json_response(text: str) -> dict | None:
+    """Parse a structured-output JSON response into the section columns.
+    Tolerates <think> blocks (already stripped), markdown code fences, and
+    stray prose around the object. Returns None if no valid JSON is found."""
+    t = text.strip()
+    t = re.sub(r"^```(?:json)?\s*|\s*```$", "", t)           # code fences
+    start, end = t.find("{"), t.rfind("}")
+    if start == -1 or end <= start:
+        return None
+    try:
+        obj = json.loads(t[start:end + 1])
+    except json.JSONDecodeError:
+        return None
+    if not isinstance(obj, dict):
+        return None
+    clean = lambda v: re.sub(r"\[\d{1,3}\](?!\()", "", v).strip() or None \
+        if isinstance(v, str) else None
+    tags = obj.get("tags")
+    if isinstance(tags, list):
+        tags = ",".join(str(t) for t in tags if str(t).strip())
+    elif not isinstance(tags, str):
+        tags = None
+    sections = {
+        "bio_md": clean(obj.get("biography")),
+        "country": clean(obj.get("country")),
+        "tags": tags,
+        "studies_md": clean(obj.get("studies")),
+        "teaches_md": clean(obj.get("teaches")),
+        "free_md": clean(obj.get("free_resources")),
+    }
+    big = [sections["studies_md"], sections["teaches_md"], sections["free_md"]]
+    sections["_parse_ok"] = any(big)
+    # same sanity guards as the marker parser
+    c = sections.get("country")
+    if c and (len(c) > 60 or "\n" in c.strip()):
+        sections["country"] = None
+    t2 = sections.get("tags")
+    if t2 and (len(t2) > 200 or t2.count(",") > 20):
+        sections["tags"] = None
+    return sections
+
+
+def parse_response(text: str) -> dict:
+    """Preferred entry point: try structured JSON first (the format the API
+    now enforces), fall back to legacy <<<MARKER>>> parsing for old responses."""
+    parsed = parse_json_response(text)
+    if parsed and parsed["_parse_ok"]:
+        return parsed
+    return parse_sections(text)
+
+
 def parse_sections(text: str) -> dict:
-    """Split the model output on <<<MARKER>>> lines into the four db columns.
-    Tolerates extra whitespace or markdown around the markers. If a marker is
-    missing, that column is left None (the full raw text is always kept in
-    report_md as a backup, so nothing is ever lost)."""
+    """Split the model output on <<<MARKER>>> lines into the db columns.
+
+    Returns a dict of the section columns PLUS a special "_parse_ok" flag.
+    If the delimiter markers are missing or too few were found, _parse_ok is
+    False and the metadata fields (country/tags) are left empty rather than
+    being filled with misassigned report text — so a malformed response can
+    never dump the whole report into the tags column again."""
     sections = {v: None for v in SECTION_KEYS.values()}
     pattern = r"<{2,3}\s*(" + "|".join(SECTION_KEYS) + r")\s*>{2,3}"
     parts = re.split(pattern, text)
-    # parts = [preamble, MARKER, content, MARKER, content, ...]
+    markers_found = (len(parts) - 1) // 2
     for i in range(1, len(parts) - 1, 2):
         key = SECTION_KEYS.get(parts[i].strip())
         if key:
             content = parts[i + 1].strip()
-            # drop a leading markdown heading the model may add under the marker
             content = re.sub(r"^#+\s*[^\n]*\n+", "", content, count=1) \
                 if re.match(r"^#+\s", content) else content
-            sections[key] = content or None
+            content = re.sub(r"\[\d{1,3}\](?!\()", "", content)
+            sections[key] = content.strip() or None
+
+    # a valid report has all 6 markers; require at least the 3 big sections
+    big = [sections["studies_md"], sections["teaches_md"], sections["free_md"]]
+    sections["_parse_ok"] = markers_found >= 3 and any(big)
+
+    # sanity guards: country is one short line, tags is one short line. If the
+    # model dumped prose into them (the old corruption), discard rather than store.
+    c = sections.get("country")
+    if c and (len(c) > 60 or "\n" in c.strip()):
+        sections["country"] = None
+    t = sections.get("tags")
+    if t and (len(t) > 200 or t.count(",") > 20):
+        sections["tags"] = None
     return sections
 
 
@@ -344,22 +510,56 @@ def cmd_run(limit: int | None):
                             (request_id, p["id"]))
                 con.commit()
             data = wait_for_job(request_id, api_key)
+            # FIRST THING after the response arrives: save the complete raw API
+            # response to full_response, before any parsing that could fail.
+            # This row now permanently holds exactly what sonar returned.
+            con.execute("UPDATE people SET full_response=?, "
+                        "updated_at=datetime('now') WHERE id=?",
+                        (json.dumps(data, ensure_ascii=False), p["id"]))
+            con.commit()
             text, cost = extract(data)
-            secs = parse_sections(text)
+            secs = parse_response(text)
+            if not secs["_parse_ok"]:
+                # The model didn't emit usable section markers. The raw response
+                # is already stored in full_response above; keep the cleaned text
+                # in report_md too, and mark the row 'error' so it shows up in
+                # retry-errors and is NEVER treated as a good report.
+                con.execute("""UPDATE people SET status='error', report_md=?,
+                               error='unparseable: model omitted section markers',
+                               cost_estimate=?, updated_at=datetime('now')
+                               WHERE id=?""", (text, cost, p["id"]))
+                con.commit()
+                print(f"    PARSE FAILED — model omitted markers; raw saved to "
+                      f"full_response, marked error (retry with `retry-errors`). "
+                      f"est. cost ~${cost:.2f}" if cost else
+                      "    PARSE FAILED — raw saved to full_response, marked error")
+                continue
+            # clean the metadata fields: country is one line; model tags are
+            # normalized and MERGED with the event-derived tags from init
+            country = (secs.get("country") or "").strip().splitlines()
+            country = country[0].strip(" .") if country else None
+            model_tags = {t.strip().lower().replace(" ", "-")
+                          for t in (secs.get("tags") or "").replace("\n", ",").split(",")
+                          if t.strip() and len(t.strip()) <= 40}
+            tags = merge_tags(p["tags"], model_tags)
             con.execute(
-                """UPDATE people SET status='done', report_md=?, bio_md=?,
+                """UPDATE people SET status='done', report_md=?,
+                   bio_md=?, country=?, tags=?,
                    studies_md=?, teaches_md=?, free_md=?,
                    model=?, cost_estimate=?, error=NULL,
                    updated_at=datetime('now') WHERE id=?""",
-                (text, secs["bio_md"], secs["studies_md"], secs["teaches_md"],
+                (text, secs["bio_md"], country, tags,
+                 secs["studies_md"], secs["teaches_md"],
                  secs["free_md"], MODEL, cost, p["id"]))
             con.commit()
             mins = (time.time() - t0) / 60
             cost_s = f"~${cost:.2f}" if cost else "n/a"
-            parsed = sum(1 for v in secs.values() if v)
-            n_links = len(re.findall(r"\[[^\]]+\]\(https?://", text))
-            print(f"    done in {mins:.1f} min, {n_links} linked resources, "
-                  f"{parsed}/4 sections parsed, est. cost {cost_s}")
+            counts = section_link_counts(secs)
+            thin_flag = any(n < MIN_LINKS[c] for c, n in counts.items())
+            print(f"    done in {mins:.1f} min — links: "
+                  f"studies {counts['studies_md']}, teaches {counts['teaches_md']}, "
+                  f"free {counts['free_md']} — est. cost {cost_s}"
+                  + ("  << THIN: below minimums, see `thin` command" if thin_flag else ""))
         except TimeoutError as e:
             # job still running; leave status='submitted' so it's collected later
             print(f"    still running: {e}")
@@ -409,7 +609,140 @@ def cmd_retry_errors():
     print(f"Reset {n} errored people to pending.")
 
 
+def cmd_requeue(names: list[str]):
+    """Reset specific people to pending so the next `run` re-researches them
+    (their old report is discarded). Use after updating the CSV with new wins
+    for someone already researched. Matches names case-insensitively."""
+    con = get_db()
+    total = 0
+    for raw in names:
+        name = normalize_name(raw)
+        n = con.execute(
+            """UPDATE people SET status='pending', report_md=NULL, bio_md=NULL,
+               studies_md=NULL, teaches_md=NULL, free_md=NULL, request_id=NULL,
+               error=NULL, updated_at=datetime('now')
+               WHERE lower(name)=lower(?)""", (name,)).rowcount
+        if n:
+            print(f"re-queued: {name}")
+            total += n
+        else:
+            print(f"not found: {name}")
+    con.commit()
+    if total:
+        print(f"\n{total} re-queued. Now run `init your.csv` to refresh their win "
+              "records, then `run`. Note: re-researching costs credits again.")
+
+
 # ------------------------------------------------------------------------- status
+
+MIN_LINKS = {"studies_md": 10, "teaches_md": 8, "free_md": 15}
+
+# link targets that teach nothing — flagged by the `thin` audit
+JUNK_LINK_PATTERNS = re.compile(
+    r"https?://[^)\s]*("
+    r"worldcupchampionships\.com"
+    r"|instagram\.com|facebook\.com|twitter\.com|x\.com/(?!.*status.*video)"
+    r"|tiktok\.com"
+    r")", re.IGNORECASE)
+
+
+def section_link_counts(row) -> dict:
+    return {col: len(re.findall(r"\[[^\]]+\]\(https?://", row[col] or ""))
+            for col in MIN_LINKS}
+
+
+def junk_link_count(row) -> int:
+    text = " ".join((row[c] or "") for c in MIN_LINKS)
+    return len(JUNK_LINK_PATTERNS.findall(text))
+
+
+def cmd_thin(limit: int | None = None):
+    """List finished people whose resource lists are below the required
+    minimums, worst first, and print a ready-to-copy requeue command.
+    With --limit N, show only the N worst so they can be fixed in batches."""
+    con = get_db()
+    thin = []
+    for p in con.execute("SELECT * FROM people WHERE status='done' ORDER BY name"):
+        counts = section_link_counts(p)
+        junk = junk_link_count(p)
+        deficit = sum(max(0, MIN_LINKS[c] - n) for c, n in counts.items()) + junk
+        if deficit > 0:
+            thin.append((deficit, p["name"], counts, junk))
+    if not thin:
+        print("All finished reports meet the resource-list minimums "
+              f"(studies>={MIN_LINKS['studies_md']}, teaches>={MIN_LINKS['teaches_md']}, "
+              f"free>={MIN_LINKS['free_md']}) and contain no junk links.")
+        return
+    thin.sort(key=lambda t: (-t[0], t[1]))       # biggest deficit first
+    total = len(thin)
+    if limit:
+        thin = thin[:limit]
+    label = f"showing worst {len(thin)} of {total}" if limit and total > len(thin) \
+        else f"{total} report(s)"
+    print(f"{label} needing attention (studies/teaches/free links, junk links, score):\n")
+    for deficit, name, c, junk in thin:
+        junk_s = f"  junk:{junk}" if junk else ""
+        print(f"  {name:35} {c['studies_md']:>3} / {c['teaches_md']:>3} / "
+              f"{c['free_md']:>3}{junk_s}   (-{deficit})")
+    names = " ".join(f'"{n}"' for _, n, _, _ in thin)
+    print(f"\nTo re-research {'these ' + str(len(thin)) if limit else 'them'} "
+          f"(costs credits):\n"
+          f"  python wctc_research.py requeue {names}\n"
+          f"  python wctc_research.py run")
+
+
+def cmd_repair():
+    """Re-parse the stored raw report_md for every finished person using the
+    current parser, and fix rows corrupted by the old parser (e.g. report text
+    dumped into the tags column). Costs nothing — no API calls. Rows whose raw
+    report has no usable markers are moved to 'error' so `retry-errors` can
+    re-research them."""
+    con = get_db()
+    rows = con.execute("SELECT * FROM people WHERE status='done'").fetchall()
+    fixed = broken = 0
+    for p in rows:
+        raw = p["report_md"] or p["full_response"]
+        # detect corruption: giant tags field, or missing big sections
+        corrupt = (p["tags"] and (len(p["tags"]) > 200 or p["tags"].count(",") > 20)) \
+            or not (p["studies_md"] or p["teaches_md"] or p["free_md"])
+        if not corrupt:
+            continue
+        if not raw:
+            con.execute("UPDATE people SET status='error', "
+                        "error='corrupt row, no raw report to reparse' WHERE id=?",
+                        (p["id"],))
+            broken += 1
+            continue
+        secs = parse_response(raw)
+        if not secs["_parse_ok"]:
+            con.execute("UPDATE people SET status='error', tags=?, "
+                        "error='unparseable on reparse: model omitted markers' "
+                        "WHERE id=?", (p["tags"] if p["tags"] and len(p["tags"]) < 200 else None, p["id"]))
+            broken += 1
+            continue
+        country = (secs.get("country") or "").strip().splitlines()
+        country = country[0].strip(" .") if country else None
+        model_tags = {t.strip().lower().replace(" ", "-")
+                      for t in (secs.get("tags") or "").replace("\n", ",").split(",")
+                      if t.strip() and len(t.strip()) <= 40}
+        # re-merge with clean event tags derived from the record
+        ev_tags = tags_from_events(
+            {ln.split("—")[0].split(":",1)[1].strip()
+             for ln in (p["record"] or "").splitlines() if ":" in ln and "—" in ln})
+        tags = merge_tags(",".join(sorted(ev_tags | model_tags)), set())
+        con.execute("""UPDATE people SET bio_md=?, country=?, tags=?, studies_md=?,
+                       teaches_md=?, free_md=?,
+                       full_response=COALESCE(full_response, report_md)
+                       WHERE id=?""",
+                    (secs["bio_md"], country, tags, secs["studies_md"],
+                     secs["teaches_md"], secs["free_md"], p["id"]))
+        fixed += 1
+    con.commit()
+    print(f"Repair complete: {fixed} row(s) re-parsed and fixed, "
+          f"{broken} moved to 'error' for re-research (run `retry-errors` then `run`).")
+    if fixed or broken:
+        print("Then run `export-json` to refresh the site.")
+
 
 def cmd_status():
     con = get_db()
@@ -454,13 +787,58 @@ def cmd_export():
             f.write("\n---\n\n")
     with open(out_csv, "w", newline="", encoding="utf-8") as f:
         w = csv.writer(f)
-        w.writerow(["name", "status", "biography", "studies",
+        w.writerow(["name", "status", "country", "tags", "biography", "studies",
                     "teaches_resources", "free_resources", "cost_estimate"])
         for p in con.execute("SELECT * FROM people ORDER BY name"):
-            w.writerow([p["name"], p["status"], p["bio_md"] or "",
+            w.writerow([p["name"], p["status"], p["country"] or "",
+                        p["tags"] or "", p["bio_md"] or "",
                         p["studies_md"] or "", p["teaches_md"] or "",
                         p["free_md"] or "", p["cost_estimate"] or ""])
     print(f"Wrote {out_md.name} ({len(done)} reports) and {out_csv.name}.")
+
+
+def cmd_export_json():
+    """Export the database to wctc_data.json (pure JSON) and wctc_data.js
+    (same data wrapped for the dashboard, so it works when opened as a local
+    file without any web server)."""
+    con = get_db()
+    # backfill: rows saved before full_response was always stored copy it
+    # from report_md so exports always carry the raw response
+    con.execute("UPDATE people SET full_response = report_md "
+                "WHERE full_response IS NULL AND report_md IS NOT NULL")
+    con.commit()
+    people = []
+    win_re = re.compile(r"^- (?P<year>[\d\-]+): (?P<event>.+) — (?P<place>\S+) "
+                        r"place, (?P<pct>[\d.,]+)% net return$")
+    for p in con.execute("SELECT * FROM people ORDER BY name"):
+        wins = []
+        for line in (p["record"] or "").splitlines():
+            m = win_re.match(line.strip())
+            if m:
+                wins.append({"year": m["year"], "event": m["event"],
+                             "place": m["place"],
+                             "pct": float(m["pct"].replace(",", ""))})
+        people.append({
+            "name": p["name"], "status": p["status"], "wins": wins,
+            "country": p["country"],
+            "tags": [t for t in (p["tags"] or "").split(",") if t],
+            "bio": p["bio_md"], "studies": p["studies_md"],
+            "teaches": p["teaches_md"], "free": p["free_md"],
+            "report": p["report_md"],   # full raw model response, always exported
+            "cost": p["cost_estimate"], "updated_at": p["updated_at"],
+        })
+    data = {"generated_at": time.strftime("%Y-%m-%d %H:%M"),
+            "model": MODEL, "people": people}
+    base = Path(__file__).parent
+    (base / "wctc_data.json").write_text(
+        json.dumps(data, ensure_ascii=False, indent=1), encoding="utf-8")
+    (base / "wctc_data.js").write_text(
+        "window.WCTC_DATA = " + json.dumps(data, ensure_ascii=False) + ";",
+        encoding="utf-8")
+    n_done = sum(1 for x in people if x["status"] == "done")
+    print(f"Wrote wctc_data.json and wctc_data.js "
+          f"({len(people)} people, {n_done} researched). "
+          f"Open index.html to view The One Percent.")
 
 
 # --------------------------------------------------------------------------- main
@@ -473,7 +851,15 @@ if __name__ == "__main__":
     p_run = sub.add_parser("run");     p_run.add_argument("--limit", type=int)
     sub.add_parser("status")
     sub.add_parser("retry-errors")
+    sub.add_parser("repair")
+    p_thin = sub.add_parser("thin")
+    p_thin.add_argument("--limit", type=int,
+                        help="show only the N worst reports")
     sub.add_parser("export")
+    sub.add_parser("export-json")
+    p_rq = sub.add_parser("requeue")
+    p_rq.add_argument("names", nargs="+",
+                      help='person names to re-research, e.g. requeue "Bret Miller"')
     a = ap.parse_args()
     if a.cmd == "init":
         cmd_init(a.csv)
@@ -483,5 +869,13 @@ if __name__ == "__main__":
         cmd_status()
     elif a.cmd == "retry-errors":
         cmd_retry_errors()
+    elif a.cmd == "repair":
+        cmd_repair()
+    elif a.cmd == "thin":
+        cmd_thin(a.limit)
+    elif a.cmd == "requeue":
+        cmd_requeue(a.names)
     elif a.cmd == "export":
         cmd_export()
+    elif a.cmd == "export-json":
+        cmd_export_json()

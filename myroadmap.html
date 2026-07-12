@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Roadmap · The One Percent</title>
+<link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16x16.png">
+<link rel="manifest" href="/icons/site.webmanifest">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<script src="lucide.min.js"></script>
+<script>if(!window.lucide){var s=document.createElement("script");s.src="https://cdn.jsdelivr.net/npm/lucide@0.299.0/dist/umd/lucide.min.js";s.onload=function(){lucide.createIcons()};document.head.appendChild(s);}</script>
+<script src="wctc_data.js"></script>
+<script src="app-common.js"></script>
+<style>
+  .overall{display:flex;align-items:center;gap:18px;padding:18px 22px;margin-top:8px}
+  .overall .ring{font-family:var(--disp);font-weight:800;font-size:26px;color:var(--gold);min-width:86px}
+  .overall .track{flex:1;height:10px;background:var(--canvas);border-radius:6px;overflow:hidden}
+  .overall .fill{height:100%;border-radius:6px;background:linear-gradient(90deg,var(--gold),#dcb968);transition:width .3s;display:block}
+  .overall .sub{color:var(--muted);font-size:13px;white-space:nowrap}
+
+  .add-section{display:flex;gap:10px;margin:20px 0}
+  .add-section input{flex:1;background:var(--surface);border:1px solid var(--line);border-radius:11px;
+    padding:11px 15px;font-size:14px;box-shadow:var(--shadow)}
+  .btn{display:flex;align-items:center;gap:8px;border:none;background:var(--navy);color:#fff;
+    border-radius:11px;padding:11px 18px;font-weight:600;font-size:14px}
+  .btn:hover{background:var(--navy-deep)}
+  .btn.ghost{background:none;border:1px solid var(--line);color:var(--muted);padding:8px 12px;border-radius:9px}
+  .btn.ghost:hover{border-color:var(--blue);color:var(--blue)}
+
+  .section-card{margin-bottom:18px;overflow:hidden}
+  .sec-head{display:flex;align-items:center;gap:12px;padding:15px 20px;border-bottom:1px solid var(--line)}
+  .sec-head .name{font-family:var(--disp);font-weight:700;font-size:17px;flex:1;min-width:0;overflow-wrap:anywhere}
+  .sec-head .pct{font-family:var(--disp);font-weight:800;font-size:15px;color:var(--gold);white-space:nowrap}
+  .sec-head .pct.zero{color:var(--muted);font-weight:600;font-size:13px}
+  .sec-bar{height:5px;background:var(--canvas)}
+  .sec-bar i{display:block;height:100%;background:linear-gradient(90deg,var(--gold),#dcb968);transition:width .3s}
+  .iconbtn{border:none;background:none;color:var(--muted);width:30px;height:30px;border-radius:8px;
+    display:grid;place-items:center;flex-shrink:0}
+  .iconbtn:hover{background:var(--canvas);color:var(--blue)}
+  .iconbtn.danger:hover{color:#d9534f}
+  .edit-input{flex:1;font:inherit;font-family:var(--disp);font-weight:700;font-size:17px;
+    border:1px solid var(--blue);border-radius:8px;padding:4px 10px;min-width:0}
+
+  .task{display:flex;align-items:center;gap:12px;padding:10px 20px;border-bottom:1px solid #eef1f5}
+  .task:last-of-type{border-bottom:none}
+  .task .check{width:22px;height:22px;border-radius:7px;border:2px solid var(--line);background:var(--surface);
+    display:grid;place-items:center;color:#fff;flex-shrink:0;padding:0}
+  .task .check.done{background:var(--gold);border-color:var(--gold)}
+  .task .check .lucide{width:14px;height:14px}
+  .task .txt{flex:1;font-size:14px;min-width:0;overflow-wrap:anywhere}
+  .task .txt.done{color:var(--muted);text-decoration:line-through}
+  .task .edit-input{font-family:var(--body);font-weight:400;font-size:14px}
+  .add-task{display:flex;gap:8px;padding:12px 20px;background:#fbfcfe;border-top:1px solid var(--line)}
+  .add-task input{flex:1;border:1px solid var(--line);border-radius:9px;padding:8px 12px;font-size:13.5px;background:var(--surface)}
+  .no-tasks{padding:18px 20px;color:var(--muted);font-size:13.5px}
+</style>
+</head>
+<body>
+<nav><div class="nav-in">
+  <a class="mark" href="index.html"><img class="mono" src="/icons/apple-touch-icon.png" alt="1%">The One Percent</a>
+  <div class="nav-links">
+    <a href="index.html"><i data-lucide="home" class="lucide"></i><span>Home</span></a>
+    <a href="podiums.html"><i data-lucide="trophy" class="lucide"></i><span>Podiums</span></a>
+    <a href="insights.html"><i data-lucide="bar-chart-3" class="lucide"></i><span>Insights</span></a>
+    <a href="explorer.html"><i data-lucide="table-2" class="lucide"></i><span>Explorer</span></a>
+    <a href="prompts.html"><i data-lucide="sparkles" class="lucide"></i><span>Prompts</span></a>
+  </div>
+  <div class="profile">
+    <button class="profile-btn" aria-expanded="false" aria-label="Profile menu">
+      <i data-lucide="circle-user" class="lucide"></i>
+      <i data-lucide="chevron-down" class="lucide chev"></i>
+    </button>
+    <div class="profile-menu">
+      <a href="myroadmap.html"><i data-lucide="route" class="lucide"></i>My Roadmap</a>
+    </div>
+  </div>
+</div></nav>
+
+<div class="wrap">
+  <div class="page-head"><h1>My Roadmap</h1>
+    <p>Your personal study plan. Add sections for each phase or skill, fill them with tasks,
+    and tick them off — everything is saved on this computer automatically.</p></div>
+
+  <div class="card overall" id="overall" style="display:none">
+    <span class="ring num" id="ov-pct">0%</span>
+    <span class="track"><i class="fill" id="ov-fill" style="width:0%"></i></span>
+    <span class="sub num" id="ov-sub"></span>
+  </div>
+
+  <div class="add-section">
+    <input id="new-section" type="text" placeholder="New section — e.g. Phase 1: Futures foundations" maxlength="120">
+    <button class="btn" id="add-section-btn"><i data-lucide="plus" class="lucide"></i>Add section</button>
+  </div>
+
+  <div id="sections"></div>
+  <div class="footer">Saved locally in this browser. Clearing the browser's site data erases the roadmap.</div>
+</div>
+
+<script>
+(function(){
+  const KEY = "op-roadmap-v1";
+  const $ = s => document.querySelector(s);
+  const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,7);
+  const esc = s => s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+
+  let state = load();
+  function load(){
+    try{
+      const d = JSON.parse(localStorage.getItem(KEY) || "null");
+      if (d && Array.isArray(d.sections)) return d;
+    }catch(e){}
+    return {sections: []};
+  }
+  function save(){
+    try{ localStorage.setItem(KEY, JSON.stringify(state)); }
+    catch(e){ alert("Could not save — the browser blocked local storage."); }
+  }
+
+  let editing = null;   // {kind:'sec'|'task', sid, tid}
+
+  const pct = sec => sec.tasks.length
+    ? Math.round(sec.tasks.filter(t=>t.done).length / sec.tasks.length * 100) : null;
+
+  function render(){
+    const all = state.sections.flatMap(s=>s.tasks);
+    const ov = $("#overall");
+    if(all.length){
+      ov.style.display="";
+      const p = Math.round(all.filter(t=>t.done).length/all.length*100);
+      $("#ov-pct").textContent = p+"%";
+      $("#ov-fill").style.width = p+"%";
+      $("#ov-sub").textContent = `${all.filter(t=>t.done).length} of ${all.length} tasks done · ${state.sections.length} section${state.sections.length!==1?"s":""}`;
+    } else ov.style.display="none";
+
+    $("#sections").innerHTML = state.sections.length ? state.sections.map(sec=>{
+      const p = pct(sec);
+      const editingSec = editing && editing.kind==="sec" && editing.sid===sec.id;
+      return `
+      <div class="card section-card" data-sid="${sec.id}">
+        <div class="sec-head">
+          ${editingSec
+            ? `<input class="edit-input" data-edit-sec value="${esc(sec.name)}" maxlength="120">`
+            : `<span class="name">${esc(sec.name)}</span>`}
+          <span class="pct num ${p===null?"zero":""}">${p===null?"no tasks":p+"%"}</span>
+          <button class="iconbtn" data-act="edit-sec" title="Rename section"><i data-lucide="pencil" class="lucide"></i></button>
+          <button class="iconbtn danger" data-act="del-sec" title="Delete section"><i data-lucide="trash-2" class="lucide"></i></button>
+        </div>
+        <div class="sec-bar"><i style="width:${p||0}%"></i></div>
+        ${sec.tasks.length ? sec.tasks.map(t=>{
+          const editingTask = editing && editing.kind==="task" && editing.tid===t.id;
+          return `
+          <div class="task" data-tid="${t.id}">
+            <button class="check ${t.done?"done":""}" data-act="toggle" title="${t.done?"Mark not done":"Mark done"}">
+              ${t.done?'<i data-lucide="check" class="lucide"></i>':""}
+            </button>
+            ${editingTask
+              ? `<input class="edit-input" data-edit-task value="${esc(t.text)}" maxlength="300">`
+              : `<span class="txt ${t.done?"done":""}">${esc(t.text)}</span>`}
+            <button class="iconbtn" data-act="edit-task" title="Edit task"><i data-lucide="pencil" class="lucide"></i></button>
+            <button class="iconbtn danger" data-act="del-task" title="Delete task"><i data-lucide="trash-2" class="lucide"></i></button>
+          </div>`;}).join("")
+        : `<div class="no-tasks">No tasks yet — add the first one below.</div>`}
+        <div class="add-task">
+          <input type="text" data-newtask placeholder="New task in this section…" maxlength="300">
+          <button class="btn ghost" data-act="add-task"><i data-lucide="plus" class="lucide"></i>Add</button>
+        </div>
+      </div>`;}).join("")
+    : `<div class="card empty">
+        <i data-lucide="route" class="lucide" style="width:34px;height:34px;color:var(--gold)"></i>
+        <p style="margin-top:12px"><b>Your roadmap is empty.</b><br>
+        Add your first section above — for example a phase from a roadmap prompt on the Prompts page.</p>
+      </div>`;
+
+    if(window.lucide) lucide.createIcons();
+    const focusEl = document.querySelector("[data-edit-sec],[data-edit-task]");
+    if (focusEl){ focusEl.focus(); focusEl.select(); }
+  }
+
+  const findSec = sid => state.sections.find(s=>s.id===sid);
+
+  function addSection(){
+    const inp = $("#new-section");
+    const name = inp.value.trim();
+    if(!name) return;
+    state.sections.push({id:uid(), name, tasks:[]});
+    inp.value=""; save(); render(); inp.focus();
+  }
+  $("#add-section-btn").addEventListener("click", addSection);
+  $("#new-section").addEventListener("keydown", e=>{ if(e.key==="Enter") addSection(); });
+
+  $("#sections").addEventListener("click", e=>{
+    const btn = e.target.closest("[data-act]");
+    if(!btn) return;
+    const secEl = btn.closest("[data-sid]");
+    const sec = findSec(secEl.dataset.sid);
+    const taskEl = btn.closest("[data-tid]");
+    const task = taskEl ? sec.tasks.find(t=>t.id===taskEl.dataset.tid) : null;
+    switch(btn.dataset.act){
+      case "toggle": task.done = !task.done; save(); render(); break;
+      case "del-task": sec.tasks = sec.tasks.filter(t=>t!==task); save(); render(); break;
+      case "del-sec":
+        if(!sec.tasks.length || confirm(`Delete "${sec.name}" and its ${sec.tasks.length} task(s)?`)){
+          state.sections = state.sections.filter(s=>s!==sec); save(); render();
+        } break;
+      case "edit-sec": editing = {kind:"sec", sid:sec.id}; render(); break;
+      case "edit-task": editing = {kind:"task", sid:sec.id, tid:task.id}; render(); break;
+      case "add-task": {
+        const inp = secEl.querySelector("[data-newtask]");
+        const text = inp.value.trim();
+        if(text){
+          sec.tasks.push({id:uid(), text, done:false}); save(); render();
+          document.querySelector(`[data-sid="${sec.id}"] [data-newtask]`)?.focus();
+        }
+        break;
+      }
+    }
+  });
+
+  $("#sections").addEventListener("keydown", e=>{
+    if(e.target.matches("[data-newtask]") && e.key==="Enter"){
+      e.target.closest(".add-task").querySelector("[data-act='add-task']").click();
+    }
+    if(e.target.matches("[data-edit-sec],[data-edit-task]")){
+      if(e.key==="Enter") e.target.blur();
+      if(e.key==="Escape"){ editing=null; render(); }
+    }
+  });
+  $("#sections").addEventListener("focusout", e=>{
+    if(!editing) return;
+    if(e.target.matches("[data-edit-sec]")){
+      const sec = findSec(editing.sid);
+      const v = e.target.value.trim();
+      if(v) sec.name = v;
+      editing=null; save(); render();
+    } else if(e.target.matches("[data-edit-task]")){
+      const sec = findSec(editing.sid);
+      const t = sec.tasks.find(x=>x.id===editing.tid);
+      const v = e.target.value.trim();
+      if(v) t.text = v;
+      editing=null; save(); render();
+    }
+  });
+
+  render();
+  OP.boot();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The One Percent</title>
+<link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16x16.png">
+<link rel="manifest" href="/icons/site.webmanifest">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<script src="lucide.min.js"></script>
+<script>if(!window.lucide){var s=document.createElement("script");s.src="https://cdn.jsdelivr.net/npm/lucide@0.299.0/dist/umd/lucide.min.js";s.onload=function(){lucide.createIcons()};document.head.appendChild(s);}</script>
+<script src="wctc_data.js"></script>
+<script src="app-common.js"></script>
+</head>
+<body>
+<nav><div class="nav-in">
+  <a class="mark" href="index.html"><img class="mono" src="/icons/apple-touch-icon.png" alt="1%">The One Percent</a>
+  <div class="nav-links">
+    <a href="index.html"><i data-lucide="home" class="lucide"></i><span>Home</span></a>
+    <a href="podiums.html"><i data-lucide="trophy" class="lucide"></i><span>Podiums</span></a>
+    <a href="insights.html"><i data-lucide="bar-chart-3" class="lucide"></i><span>Insights</span></a>
+    <a href="explorer.html"><i data-lucide="table-2" class="lucide"></i><span>Explorer</span></a>
+    <a href="prompts.html"><i data-lucide="sparkles" class="lucide"></i><span>Prompts</span></a>
+  </div>
+  <div class="profile">
+    <button class="profile-btn" aria-expanded="false" aria-label="Profile menu">
+      <i data-lucide="circle-user" class="lucide"></i>
+      <i data-lucide="chevron-down" class="lucide chev"></i>
+    </button>
+    <div class="profile-menu">
+      <a href="myroadmap.html"><i data-lucide="route" class="lucide"></i>My Roadmap</a>
+    </div>
+  </div>
+</div></nav>
+
+<div class="wrap" id="app"></div>
+
+<script>
+(function(){
+  const {people, fmtPct, bestPct, totalLinks, DATA} = OP;
+  const done = people.filter(p=>p.status==="done");
+  const links = done.reduce((s,p)=>s+totalLinks(p),0);
+  const top = Math.max(0,...people.map(bestPct));
+  const podium = [...people].sort((a,b)=>bestPct(b)-bestPct(a)).slice(0,3);
+  const order = [podium[1], podium[0], podium[2]].filter(Boolean); // 2nd,1st,3rd
+  const cls = ["p2","p1","p3"];
+  const medal = ["2","1","3"];
+
+  const noData = !people.length;
+  document.getElementById("app").innerHTML = noData ? `
+    <div class="empty" style="margin-top:60px"><b>No data loaded yet.</b><br><br>
+    Run <b>python wctc_research.py export-json</b> and keep wctc_data.js next to these pages, then reload.</div>`
+  : `
+  <div class="hero"><div class="glow"></div>
+    <div class="eyebrow">World Cup Trading Championships · winners archive</div>
+    <h1>The One <span class="pct">Percent</span></h1>
+    <p>${people.length} traders have placed on the official leaderboards. This archive maps how each of
+    them learned, what they now teach, and the free ways to study the same skills yourself.</p>
+  </div>
+
+  <div class="kpis" style="margin-top:20px">
+    <div class="card kpi"><div class="ic"><i data-lucide="users" class="lucide"></i></div>
+      <div><div class="k">Champions on record</div><div class="v num">${people.length}</div></div></div>
+    <div class="card kpi"><div class="ic"><i data-lucide="file-search" class="lucide"></i></div>
+      <div><div class="k">Fully researched</div><div class="v num">${done.length}</div></div></div>
+    <div class="card kpi"><div class="ic"><i data-lucide="link" class="lucide"></i></div>
+      <div><div class="k">Learning resources linked</div><div class="v num">${links.toLocaleString()}</div></div></div>
+    <div class="card kpi"><div class="ic gold"><i data-lucide="trending-up" class="lucide"></i></div>
+      <div><div class="k">Best return on record</div><div class="v num">${fmtPct(top)}%</div></div></div>
+  </div>
+
+  <div class="page-head"><h1>All-time podium</h1>
+    <p>The three highest net returns ever recorded across every division and year.</p></div>
+  <div class="podium">
+    ${order.map((p,i)=>`
+      <div class="step ${cls[i]}">
+        <div class="who">
+          <div class="medal"><i data-lucide="medal" class="lucide"></i></div>
+          <div class="nm">${p.name}</div>
+          <div class="ret num">+${fmtPct(bestPct(p))}%</div>
+          <div class="sub">${p.wins.find(w=>w.pct===bestPct(p))?.year||""}${p.country?` · ${p.country}`:""}</div>
+        </div>
+        <div class="base">${medal[i]}</div>
+      </div>`).join("")}
+  </div>
+
+  <div class="navcards">
+    <a class="card navcard" href="podiums.html">
+      <div class="ic"><i data-lucide="trophy" class="lucide"></i></div>
+      <h3>Podiums <i data-lucide="arrow-right" class="lucide"></i></h3>
+      <p>Top three by category — futures, forex, stocks, options — and by year.</p></a>
+    <a class="card navcard" href="insights.html">
+      <div class="ic"><i data-lucide="bar-chart-3" class="lucide"></i></div>
+      <h3>Insights <i data-lucide="arrow-right" class="lucide"></i></h3>
+      <p>Which strategies champions actually use, most common tags, and countries.</p></a>
+    <a class="card navcard" href="explorer.html">
+      <div class="ic"><i data-lucide="table-2" class="lucide"></i></div>
+      <h3>Explorer <i data-lucide="arrow-right" class="lucide"></i></h3>
+      <p>Every trader in one table — filter by year, style, place, country, or search.</p></a>
+  </div>
+
+  <div class="footer">Data researched with ${DATA.model||"sonar-deep-research"} · updated ${DATA.generated_at||"—"}</div>`;
+  OP.boot();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Insights · The One Percent</title>
+<link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16x16.png">
+<link rel="manifest" href="/icons/site.webmanifest">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<script src="lucide.min.js"></script>
+<script>if(!window.lucide){var s=document.createElement("script");s.src="https://cdn.jsdelivr.net/npm/lucide@0.299.0/dist/umd/lucide.min.js";s.onload=function(){lucide.createIcons()};document.head.appendChild(s);}</script>
+<script src="wctc_data.js"></script>
+<script src="app-common.js"></script>
+</head>
+<body>
+<nav><div class="nav-in">
+  <a class="mark" href="index.html"><img class="mono" src="/icons/apple-touch-icon.png" alt="1%">The One Percent</a>
+  <div class="nav-links">
+    <a href="index.html"><i data-lucide="home" class="lucide"></i><span>Home</span></a>
+    <a href="podiums.html"><i data-lucide="trophy" class="lucide"></i><span>Podiums</span></a>
+    <a href="insights.html"><i data-lucide="bar-chart-3" class="lucide"></i><span>Insights</span></a>
+    <a href="explorer.html"><i data-lucide="table-2" class="lucide"></i><span>Explorer</span></a>
+    <a href="prompts.html"><i data-lucide="sparkles" class="lucide"></i><span>Prompts</span></a>
+  </div>
+  <div class="profile">
+    <button class="profile-btn" aria-expanded="false" aria-label="Profile menu">
+      <i data-lucide="circle-user" class="lucide"></i>
+      <i data-lucide="chevron-down" class="lucide chev"></i>
+    </button>
+    <div class="profile-menu">
+      <a href="myroadmap.html"><i data-lucide="route" class="lucide"></i>My Roadmap</a>
+    </div>
+  </div>
+</div></nav>
+
+<div class="wrap">
+  <div class="page-head"><h1>Insights</h1>
+    <p>Patterns across the researched champions: the strategies they actually use, the most common
+    profile tags, and where they come from. Based on completed research reports.</p></div>
+  <div id="stage" style="margin-top:8px"></div>
+  <div class="footer" id="foot"></div>
+</div>
+
+<script>
+(function(){
+  const {people} = OP;
+  const done = people.filter(p=>p.status==="done");
+  const stage = document.getElementById("stage");
+
+  if(!done.length){
+    stage.innerHTML = `<div class="card empty"><b>No research completed yet.</b><br><br>
+      Insights are built from the tags found during research. Run
+      <b>python wctc_research.py run</b>, then <b>export-json</b>, and reload.</div>`;
+    OP.boot(); return;
+  }
+
+  // strategy tags = the style vocabulary the model assigns from research
+  const STRATEGY = ["systematic","algorithmic","discretionary","technical-analysis",
+                    "fundamental","day-trading","swing-trading"];
+  const freq = list => {
+    const f={};
+    list.forEach(p=>(p.tags||[]).forEach(t=>f[t]=(f[t]||0)+1));
+    return f;
+  };
+  const tagFreq = freq(done);
+  const strategies = STRATEGY.map(t=>[t,tagFreq[t]||0]).filter(([,n])=>n>0)
+                             .sort((a,b)=>b[1]-a[1]);
+  const commonTags = Object.entries(tagFreq).sort((a,b)=>b[1]-a[1]).slice(0,12);
+  const countries = {};
+  done.forEach(p=>{ if(p.country && p.country!=="Unknown") countries[p.country]=(countries[p.country]||0)+1; });
+  const countryRows = Object.entries(countries).sort((a,b)=>b[1]-a[1]).slice(0,12);
+
+  const bars = (rows, denom) => rows.map(([lbl,n])=>`
+    <div class="barrow">
+      <span class="lbl" title="${lbl}">${lbl.replace(/-/g," ")}</span>
+      <span class="track"><span class="fill" style="width:${Math.round(n/denom*100)}%"></span></span>
+      <span class="n num">${n}</span>
+    </div>`).join("");
+
+  const maxS = strategies.length?strategies[0][1]:1;
+  const maxT = commonTags.length?commonTags[0][1]:1;
+  const maxC = countryRows.length?countryRows[0][1]:1;
+
+  stage.innerHTML = `
+    <div class="kpis">
+      <div class="card kpi"><div class="ic"><i data-lucide="file-search" class="lucide"></i></div>
+        <div><div class="k">Reports analyzed</div><div class="v num">${done.length}</div></div></div>
+      <div class="card kpi"><div class="ic"><i data-lucide="tags" class="lucide"></i></div>
+        <div><div class="k">Distinct tags found</div><div class="v num">${Object.keys(tagFreq).length}</div></div></div>
+      <div class="card kpi"><div class="ic"><i data-lucide="globe" class="lucide"></i></div>
+        <div><div class="k">Countries represented</div><div class="v num">${Object.keys(countries).length}</div></div></div>
+    </div>
+
+    <div class="card" style="margin-top:18px">
+      <div class="section-title"><i data-lucide="target" class="lucide"></i>Trading strategies in use</div>
+      <div class="bars">${strategies.length?bars(strategies,maxS):
+        `<div class="empty">No strategy tags yet — they appear as research completes.</div>`}</div>
+    </div>
+
+    <div class="card" style="margin-top:18px">
+      <div class="section-title"><i data-lucide="tags" class="lucide"></i>Most common tags</div>
+      <div class="bars">${bars(commonTags,maxT)}</div>
+    </div>
+
+    <div class="card" style="margin-top:18px;margin-bottom:6px">
+      <div class="section-title"><i data-lucide="globe" class="lucide"></i>Countries</div>
+      <div class="bars">${countryRows.length?bars(countryRows,maxC):
+        `<div class="empty">Countries appear as research completes.</div>`}</div>
+    </div>`;
+  document.getElementById("foot").textContent =
+    `Counts reflect the ${done.length} researched champions; pending traders are excluded.`;
+  OP.boot();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Explorer · The One Percent</title>
+<link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16x16.png">
+<link rel="manifest" href="/icons/site.webmanifest">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<script src="lucide.min.js"></script>
+<script>if(!window.lucide){var s=document.createElement("script");s.src="https://cdn.jsdelivr.net/npm/lucide@0.299.0/dist/umd/lucide.min.js";s.onload=function(){lucide.createIcons()};document.head.appendChild(s);}</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.0/marked.min.js"></script>
+<script src="wctc_data.js"></script>
+<script src="app-common.js"></script>
+</head>
+<body>
+<nav><div class="nav-in">
+  <a class="mark" href="index.html"><img class="mono" src="/icons/apple-touch-icon.png" alt="1%">The One Percent</a>
+  <div class="nav-links">
+    <a href="index.html"><i data-lucide="home" class="lucide"></i><span>Home</span></a>
+    <a href="podiums.html"><i data-lucide="trophy" class="lucide"></i><span>Podiums</span></a>
+    <a href="insights.html"><i data-lucide="bar-chart-3" class="lucide"></i><span>Insights</span></a>
+    <a href="explorer.html"><i data-lucide="table-2" class="lucide"></i><span>Explorer</span></a>
+    <a href="prompts.html"><i data-lucide="sparkles" class="lucide"></i><span>Prompts</span></a>
+  </div>
+  <div class="profile">
+    <button class="profile-btn" aria-expanded="false" aria-label="Profile menu">
+      <i data-lucide="circle-user" class="lucide"></i>
+      <i data-lucide="chevron-down" class="lucide chev"></i>
+    </button>
+    <div class="profile-menu">
+      <a href="myroadmap.html"><i data-lucide="route" class="lucide"></i>My Roadmap</a>
+    </div>
+  </div>
+</div></nav>
+
+<div class="wrap">
+  <div class="page-head"><h1>Explorer</h1>
+    <p>Every trader on record. Combine filters, or search names, biographies and tags.
+    Open any row to read the full research report.</p></div>
+
+  <div class="controls">
+    <label class="field"><i data-lucide="search" class="lucide"></i>
+      <input id="f-q" type="search" placeholder="Search name, bio, tags…"></label>
+    <label class="field"><i data-lucide="calendar" class="lucide"></i>
+      <select id="f-year"><option value="">Year</option></select></label>
+    <label class="field"><i data-lucide="target" class="lucide"></i>
+      <select id="f-style"><option value="">Trading style</option></select></label>
+    <label class="field"><i data-lucide="medal" class="lucide"></i>
+      <select id="f-place"><option value="">Place</option></select></label>
+    <label class="field"><i data-lucide="globe" class="lucide"></i>
+      <select id="f-country"><option value="">Country</option></select></label>
+    <div class="seg" id="f-researched">
+      <button data-v="">All traders</button>
+      <button data-v="done"><i data-lucide="file-search" class="lucide"></i>Researched only</button>
+    </div>
+    <button class="seg" id="f-clear" style="padding:8px 15px;border:1px solid var(--line);color:var(--muted)">
+      <i data-lucide="x" class="lucide"></i>&nbsp;Clear</button>
+  </div>
+
+  <div class="card tablewrap" id="stage"></div>
+  <div class="footer" id="foot"></div>
+</div>
+
+<div id="modal-root"></div>
+
+<script>
+(function(){
+  const {people, fmtPct, bestPct, placeClass, totalLinks, yearsOfWin} = OP;
+  const $ = id => document.getElementById(id);
+  const state = {q:"", year:"", style:"", place:"", country:"", researched:""};
+
+  // populate selects
+  OP.allYears.forEach(y=>$("f-year").insertAdjacentHTML("beforeend",`<option>${y}</option>`));
+  // style filter: tags sorted by how many traders carry them, most common first;
+  // long free-form tags are truncated in the label (the value stays intact)
+  const tagFreq = {};
+  people.forEach(p=>(p.tags||[]).forEach(t=>tagFreq[t]=(tagFreq[t]||0)+1));
+  const styleTags = Object.keys(tagFreq).sort((a,b)=>tagFreq[b]-tagFreq[a]||a.localeCompare(b));
+  styleTags.forEach(t=>{
+    const label = t.replace(/-/g," ");
+    const short = label.length>26 ? label.slice(0,24)+"…" : label;
+    $("f-style").insertAdjacentHTML("beforeend",
+      `<option value="${t}" title="${label}">${short} (${tagFreq[t]})</option>`);
+  });
+  OP.allPlaces.forEach(pl=>$("f-place").insertAdjacentHTML("beforeend",`<option>${pl}</option>`));
+  OP.allCountries.forEach(c=>$("f-country").insertAdjacentHTML("beforeend",`<option>${c}</option>`));
+
+  const bind = (id,key)=>$(id).addEventListener(id==="f-q"?"input":"change",e=>{state[key]=e.target.value;render();});
+  bind("f-q","q");bind("f-year","year");bind("f-style","style");bind("f-place","place");bind("f-country","country");
+  const seg = $("f-researched");
+  const syncSeg = ()=>[...seg.children].forEach(b=>b.classList.toggle("on",b.dataset.v===state.researched));
+  syncSeg();
+  seg.addEventListener("click",e=>{
+    const b=e.target.closest("button"); if(!b) return;
+    state.researched=b.dataset.v; syncSeg(); render();
+  });
+  $("f-clear").addEventListener("click",()=>{
+    Object.keys(state).forEach(k=>state[k]="");
+    ["f-q","f-year","f-style","f-place","f-country"].forEach(id=>$(id).value="");
+    syncSeg(); render();
+  });
+
+  const matches = p => {
+    if(state.researched && p.status!=="done") return false;
+    if(state.country && p.country!==state.country) return false;
+    if(state.style && !(p.tags||[]).includes(state.style)) return false;
+    const winOK = w =>
+      (!state.year || yearsOfWin(w).includes(state.year)) &&
+      (!state.place || w.place===state.place);
+    if((state.year||state.place) && !p.wins.some(winOK)) return false;
+    if(state.q){
+      const n = state.q.toLowerCase();
+      const hay = [p.name, p.country||"", (p.tags||[]).join(" "), p.bio||""].join(" ").toLowerCase();
+      if(!hay.includes(n)) return false;
+    }
+    return true;
+  };
+
+  function render(){
+    const rows = people.filter(matches).sort((a,b)=>bestPct(b)-bestPct(a));
+    $("stage").innerHTML = !rows.length
+      ? `<div class="empty"><b>No traders match these filters.</b><br>Remove a filter or clear the search.</div>`
+      : `<table class="data"><thead><tr>
+          <th>Trader</th><th>Country</th><th>Best result</th><th>Best return</th>
+          <th>Results</th><th>Tags</th><th></th></tr></thead><tbody>
+        ${rows.map((p,i)=>{
+          const best = p.wins.find(w=>w.pct===bestPct(p));
+          return `<tr class="click" data-i="${people.indexOf(p)}">
+            <td><span class="status-dot st-${p.status}"></span><b>${p.name}</b></td>
+            <td>${p.country||"—"}</td>
+            <td>${best?`<span class="place-pill ${placeClass(best.place)}">${best.place}</span>
+                 <span style="color:var(--muted);font-size:12.5px"> ${best.year}</span>`:"—"}</td>
+            <td class="num" style="font-weight:600">${best?"+"+fmtPct(best.pct)+"%":"—"}</td>
+            <td class="num">${p.wins.length}</td>
+            <td>${(p.tags||[]).slice(0,3).map(t=>`<span class="pill">${t}</span>`).join("")}${(p.tags||[]).length>3?`<span class="pill">+${p.tags.length-3}</span>`:""}</td>
+            <td style="color:var(--muted)"><i data-lucide="chevron-right" class="lucide"></i></td>
+          </tr>`;}).join("")}
+        </tbody></table>`;
+    $("foot").textContent = `${rows.length} of ${people.length} traders shown`;
+    $("stage").querySelectorAll("tr.click").forEach(tr=>
+      tr.addEventListener("click",()=>openModal(people[+tr.dataset.i])));
+    OP.boot();
+  }
+
+  const md = t => t ? marked.parse(t) : `<p style="color:var(--muted)">Not found for this trader.</p>`;
+  function openModal(p){
+    const root = $("modal-root");
+    root.innerHTML = `
+      <div class="overlay">
+        <div class="modal" role="dialog" aria-label="${p.name}">
+          <div class="modal-head">
+            <div style="flex:1">
+              <h2>${p.name}</h2>
+              <div style="color:var(--muted);font-size:13px;margin-top:4px">
+                ${p.country||""}${p.country?" · ":""}${p.status==="done"
+                  ? `${totalLinks(p)} learning resources linked`
+                  : p.report ? "research retrieved — raw report below (re-run to structure it)"
+                  : "not researched yet — run the research script for the full report"}
+              </div>
+              <div style="margin-top:8px">${(p.tags||[]).map(t=>`<span class="pill">${t}</span>`).join("")}</div>
+            </div>
+            <button class="x" aria-label="Close"><i data-lucide="x" class="lucide"></i></button>
+          </div>
+          <div class="winlist">
+            ${p.wins.map(w=>`<div class="rankrow">
+              <span class="pos num">${w.year}</span>
+              <span class="place-pill ${placeClass(w.place)}">${w.place}</span>
+              <span class="ev">${w.event}</span>
+              <span class="ret num">+${fmtPct(w.pct)}%</span></div>`).join("")}
+          </div>
+          ${p.status==="done"?`
+          <div class="md">
+            <h4><i data-lucide="user" class="lucide"></i>Biography</h4>${md(p.bio)}
+            <h4><i data-lucide="graduation-cap" class="lucide"></i>What they studied</h4>${md(p.studies)}
+            <h4><i data-lucide="presentation" class="lucide"></i>What they offer</h4>${md(p.teaches)}
+            <h4><i data-lucide="gift" class="lucide"></i>Learn it free</h4>${md(p.free)}
+          </div>`
+          : p.report ? `
+          <div class="md">
+            <h4><i data-lucide="file-text" class="lucide"></i>Full research report</h4>
+            <p style="color:var(--muted);font-size:13px">This report could not be split into
+            sections automatically, so it is shown in full as the model returned it.</p>
+            ${md(p.report)}
+          </div>`
+          : `<div class="md"></div>`}
+        </div>
+      </div>`;
+    root.querySelectorAll(".md a").forEach(a=>{a.target="_blank";a.rel="noopener";});
+    const close=()=>root.innerHTML="";
+    root.querySelector(".x").addEventListener("click",close);
+    root.querySelector(".overlay").addEventListener("click",e=>{if(e.target===e.currentTarget)close();});
+    document.addEventListener("keydown",function esc(e){if(e.key==="Escape"){close();document.removeEventListener("keydown",esc);}});
+    OP.boot();
+  }
+
+  render();
+})();
+</script>
+</body>
+</html>

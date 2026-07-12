@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Prompts · The One Percent</title>
+<link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16x16.png">
+<link rel="manifest" href="/icons/site.webmanifest">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<script src="lucide.min.js"></script>
+<script>if(!window.lucide){var s=document.createElement("script");s.src="https://cdn.jsdelivr.net/npm/lucide@0.299.0/dist/umd/lucide.min.js";s.onload=function(){lucide.createIcons()};document.head.appendChild(s);}</script>
+<script src="wctc_data.js"></script>
+<script src="app-common.js"></script>
+<style>
+  .prompt-card{margin-bottom:16px;overflow:hidden}
+  .prompt-head{display:flex;align-items:center;gap:10px;padding:14px 18px;border-bottom:1px solid var(--line)}
+  .prompt-head .lucide{color:var(--blue);flex-shrink:0}
+  .prompt-head h3{font-family:var(--disp);font-weight:700;font-size:15px;flex:1}
+  .copy-btn{display:flex;align-items:center;gap:7px;border:1px solid var(--line);background:var(--surface);
+    border-radius:9px;padding:6px 13px;font-size:12.5px;font-weight:600;color:var(--muted)}
+  .copy-btn:hover{border-color:var(--blue);color:var(--blue)}
+  .copy-btn.ok{border-color:#1f9d61;color:#1f9d61}
+  .prompt-body{padding:16px 18px;font-size:13.5px;line-height:1.7;white-space:pre-wrap;
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;color:#334155;background:#fbfcfe}
+  .ph{background:var(--gold-soft);color:#8a6a24;border-radius:5px;padding:1px 6px;font-weight:600}
+  .group-title{font-family:var(--disp);font-weight:800;font-size:20px;margin:34px 0 14px;display:flex;align-items:center;gap:10px}
+  .group-title .lucide{color:var(--gold)}
+  .hint{color:var(--muted);font-size:13px;margin:-6px 0 18px}
+</style>
+</head>
+<body>
+<nav><div class="nav-in">
+  <a class="mark" href="index.html"><img class="mono" src="/icons/apple-touch-icon.png" alt="1%">The One Percent</a>
+  <div class="nav-links">
+    <a href="index.html"><i data-lucide="home" class="lucide"></i><span>Home</span></a>
+    <a href="podiums.html"><i data-lucide="trophy" class="lucide"></i><span>Podiums</span></a>
+    <a href="insights.html"><i data-lucide="bar-chart-3" class="lucide"></i><span>Insights</span></a>
+    <a href="explorer.html"><i data-lucide="table-2" class="lucide"></i><span>Explorer</span></a>
+    <a href="prompts.html"><i data-lucide="sparkles" class="lucide"></i><span>Prompts</span></a>
+  </div>
+  <div class="profile">
+    <button class="profile-btn" aria-expanded="false" aria-label="Profile menu">
+      <i data-lucide="circle-user" class="lucide"></i>
+      <i data-lucide="chevron-down" class="lucide chev"></i>
+    </button>
+    <div class="profile-menu">
+      <a href="myroadmap.html"><i data-lucide="route" class="lucide"></i>My Roadmap</a>
+    </div>
+  </div>
+</div></nav>
+
+<div class="wrap">
+  <div class="page-head"><h1>Prompts</h1>
+    <p>Copy-paste prompts for deep research tools (Perplexity, ChatGPT Deep Research, Claude).
+    Replace the <span class="ph">{PLACEHOLDERS}</span> with your trader or topic.</p></div>
+  <div id="stage"></div>
+  <div class="footer">Tip: paste a trader's win record from the Explorer under the prompt for better grounding.</div>
+</div>
+
+<script>
+(function(){
+  const PROMPTS = [
+    {group:"Trader deep-dives", icon:"user-search", items:[
+      {title:"Full research report (the archive's own prompt)", icon:"file-search", text:
+`You are producing a research report about {TRADER NAME}, a competitor in the World Cup Trading Championships (WCTC / Robbins World Cup).
+
+Their verified competition record is:
+{PASTE THEIR WINS HERE}
+
+Produce a report with these sections:
+
+1. BIOGRAPHY — concise, 1–2 short paragraphs maximum: who they are, country, trading style/instruments, and the essence of their championship record. No lists, no links here.
+
+2. WHAT THEY STUDIED — the goal is that I can GET THE SAME EDUCATION this trader had. Short explanation first, then a long bullet list (minimum 10 entries, more is better) where every bullet is a markdown hyperlink to the learning material itself: books they read, institutions or programs they attended, mentors' published works, papers, methodology documentation. If person-specific sources run out, continue with the canonical learning resources for their discipline, clearly labeled.
+
+3. WHAT THEY TEACH OR SHARE — everything this trader has made available to the public, free or paid. Short explanation, then a bullet list (minimum 8 entries) of their courses, authored books, YouTube channels, newsletters, signal services, webinars, and interviews where they explain their methods. Include prices when findable.
+
+4. FREE ALTERNATIVES — free ways to learn the same skills. Short explanation, then a long bullet list (minimum 15 entries): free courses, YouTube channels, public-domain books, university OCW, broker/exchange education portals, open-source tools.
+
+LINK RULES: every link must be something I can study from. Banned: the championship's own website, standings/leaderboard pages, social-media promos, and news that merely reports results — I already know they're a champion. Never invent URLs; only include real links you verified during research.`},
+      {title:"Methodology deep-dive", icon:"target", text:
+`Explain in maximum depth the exact trading methodology of {TRADER NAME}, the World Cup Trading Championships competitor. Cover: what markets and timeframes they trade, their entry and exit logic, how they size positions and manage risk, what indicators/frameworks/theories they rely on, and how their approach evolved over their career. Quote or paraphrase their own explanations from interviews, books, or courses wherever possible, with links to each source. End with a bullet list of every primary source you used.`},
+      {title:"Everything they sell or give away (with reviews)", icon:"shopping-bag", text:
+`List absolutely everything {TRADER NAME} currently sells or gives away to the public: courses, books, indicators, software, signal services, newsletters, communities, mentorships. For each item include: name, direct link, current price (or "free"), what it teaches, and a summary of independent reviews or user opinions where they exist (Trustpilot, Reddit, forums). Clearly separate verified offerings from things merely attributed to them.`},
+      {title:"Interviews & appearances hunt", icon:"mic", text:
+`Find every interview, podcast episode, webinar, conference talk, and YouTube appearance by {TRADER NAME} the trader. For each: title, where it was published, date, a direct link, and 2-3 bullet points on what trading knowledge they actually share in it. Sort from most educational to least. Only include appearances where they discuss their methods — skip pure promo spots.`},
+      {title:"Verification & criticism check", icon:"shield-check", text:
+`Investigate the credibility of {TRADER NAME}, World Cup Trading Championships competitor. What parts of their track record are independently verified and by whom? Have they faced criticism, regulatory action, refund complaints, or accusations regarding their courses or services? Present both the supporting evidence and the criticisms neutrally, each claim with a linked source. Conclude with what a prospective student should verify before buying anything from them.`},
+      {title:"Compare two champions", icon:"git-compare", text:
+`Compare the trading approaches of {TRADER A} and {TRADER B}, both World Cup Trading Championships competitors. Build a markdown table comparing: markets traded, timeframe, systematic vs discretionary, core methodology, risk management style, what they teach, and cost of learning from each. Then explain which type of aspiring trader each approach suits better, and list the best resource to start with for each (with links).`},
+    ]},
+    {group:"Topic deep-dives", icon:"book-open", items:[
+      {title:"Free curriculum builder", icon:"graduation-cap", text:
+`Build me a complete self-study curriculum for {TOPIC} (e.g. futures day trading, systematic trading, Elliott Wave analysis) using ONLY free resources. Structure it as ordered stages from absolute beginner to advanced. For each stage: what to learn, the specific free resources to use (each a markdown hyperlink — free courses, YouTube channels/playlists, public-domain books, university OCW, exchange education portals, open-source tools), roughly how long the stage takes, and how to know I'm ready for the next stage. Minimum 20 linked resources total. Never invent URLs.`},
+      {title:"Canonical books & papers", icon:"library", text:
+`What are the canonical books and papers for learning {TOPIC}? List 10-20, ordered by the sequence I should read them. For each: title as a hyperlink (publisher page, or full text if legally free/public domain), author, why it's essential, and what specifically I'll be able to do after reading it. Flag which ones are freely and legally available in full, with direct links to those versions.`},
+      {title:"Strategy explainer", icon:"lightbulb", text:
+`Explain {STRATEGY OR CONCEPT} (e.g. Fibonacci time and price projections, dual time frame momentum, COT analysis) as used by professional futures/forex traders. Cover: the underlying logic, exact rules for applying it, a worked example on a real market, common mistakes, and how its effectiveness holds up to scrutiny or backtesting. End with a bullet list of the best free resources to master it, each as a markdown hyperlink.`},
+      {title:"Tools & software audit", icon:"wrench", text:
+`What software and tools do serious {TOPIC} traders actually use? Cover charting platforms, backtesting frameworks, data sources, and execution platforms. For each: link, price (highlight free and open-source options), what it's best at, and its main limitation. Then recommend the cheapest complete stack a beginner could start with today, with total monthly cost.`},
+      {title:"Skill gap analysis", icon:"route", text:
+`I want to trade {TOPIC} at a competitive level. The champions in this discipline typically know: {PASTE SKILLS/TAGS FROM THE INSIGHTS PAGE}. Build a gap analysis: for each skill, explain what mastery looks like, how to self-assess my current level, and the single best free resource (hyperlinked) to close the gap. Order the skills by which to develop first.`},
+      {title:"Complete study-material catalog (free + paid)", icon:"layers", text:
+`Build the most complete catalog possible of study materials for {TOPIC}, both free AND paid. Organize into these categories: books, structured courses, video channels/playlists, newsletters & blogs, communities & forums, podcasts, and practice tools (simulators, backtesters, datasets). For EVERY item: title as a markdown hyperlink, author/provider, price ("free" or the actual cost), difficulty level (beginner/intermediate/advanced), and one line on what it uniquely covers. Aim for at least 30 items total. Within each category, order from most to least essential. Never invent URLs — only include links you verified during research.`},
+      {title:"Best paid materials — are they worth it?", icon:"badge-dollar-sign", text:
+`What are the most reputable PAID courses, books, and programs for learning {TOPIC}? For each: title as a hyperlink, provider, current price, exactly what it covers, and a summary of independent reviews (Trustpilot, Reddit, forums — link them). Then, for each paid item, answer honestly: can the same knowledge be assembled from free resources, and if so, which ones (with links)? Finish with a verdict table: which paid materials are genuinely worth the money, and which are replaceable with a free stack.`},
+      {title:"Trading-style roadmap: zero to funded", icon:"map", text:
+`Build a complete roadmap for becoming a {TRADING STYLE} trader (e.g. futures day trader, systematic/algorithmic trader, forex swing trader), starting from zero knowledge. Structure it in phases: (1) foundations — markets, instruments, terminology; (2) the method — the core analysis and strategy skills of this style; (3) risk & psychology; (4) practice — paper trading, journaling, simulators; (5) going live — capital requirements, brokers, funded-trader programs and their real costs and rules. For each phase: the specific study materials (markdown hyperlinks, mixing the best free and paid options with prices), concrete milestones that prove the phase is complete, and realistic time estimates. Be honest about failure rates and the realistic odds at each phase.`},
+      {title:"Style deep-comparison: which suits me?", icon:"scale", text:
+`Compare these trading styles in depth: day trading, swing trading, position trading, and systematic/algorithmic trading, applied to {MARKET} (e.g. futures, forex, stocks). Build a markdown table comparing: time commitment per day, capital needed to start realistically, time to reach basic competence, psychological demands, typical tools and costs, and how champions of each style actually operate. Then describe what kind of person/schedule/personality each style fits. End with the single best starting resource for each style, hyperlinked, free options preferred.`},
+      {title:"Champion-informed roadmap", icon:"crown", text:
+`The following World Cup Trading Championships winners share this trading style: {PASTE 2-4 TRADER NAMES}. Research how each of them learned their craft, then synthesize a single study roadmap that follows the common path they took: the concepts they all mastered, the books/mentors that appear repeatedly in their backgrounds, and the order in which they built their skills. Present the roadmap in stages, each stage with hyperlinked study materials (the actual resources these champions used where findable, plus modern free equivalents), and note which champion's example supports each stage. Never invent biographical claims — if their learning path is undocumented, say so and fall back to the discipline's canonical path.`},
+      {title:"One-topic mastery sprint", icon:"timer", text:
+`I want to master exactly one subskill of {TRADING STYLE}: {SUBSKILL} (e.g. order flow reading, position sizing, backtesting in Python, Fibonacci projections). Design a focused 30-day study plan: week-by-week goals, daily time budget of {HOURS} hours, the precise study materials for each week (markdown hyperlinks, free preferred, paid only when clearly superior — with prices), practice exercises with concrete success criteria, and a final self-test that proves mastery. Keep the plan brutally focused: exclude everything not essential to this one subskill.`},
+    ]},
+  ];
+
+  const esc = s => s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  const highlight = s => esc(s).replace(/\{[A-Z][A-Z0-9 /&'-]*\}/g, m=>`<span class="ph">${m}</span>`);
+
+  document.getElementById("stage").innerHTML = PROMPTS.map(g=>`
+    <div class="group-title"><i data-lucide="${g.icon}" class="lucide"></i>${g.group}</div>
+    ${g.items.map((p,i)=>`
+      <div class="card prompt-card">
+        <div class="prompt-head">
+          <i data-lucide="${p.icon}" class="lucide"></i>
+          <h3>${p.title}</h3>
+          <button class="copy-btn" data-copy><i data-lucide="copy" class="lucide"></i>Copy</button>
+        </div>
+        <div class="prompt-body" data-text>${highlight(p.text)}</div>
+      </div>`).join("")}`).join("");
+
+  document.querySelectorAll("[data-copy]").forEach(btn=>{
+    btn.addEventListener("click",()=>{
+      const text = btn.closest(".prompt-card").querySelector("[data-text]").innerText;
+      const done = ()=>{ btn.classList.add("ok");
+        btn.innerHTML = '<i data-lucide="check" class="lucide"></i>Copied';
+        lucide.createIcons();
+        setTimeout(()=>{ btn.classList.remove("ok");
+          btn.innerHTML = '<i data-lucide="copy" class="lucide"></i>Copy';
+          lucide.createIcons(); }, 1600); };
+      if (navigator.clipboard && window.isSecureContext !== false) {
+        navigator.clipboard.writeText(text).then(done).catch(()=>fallback());
+      } else fallback();
+      function fallback(){
+        const ta=document.createElement("textarea");
+        ta.value=text; ta.style.position="fixed"; ta.style.opacity="0";
+        document.body.appendChild(ta); ta.select();
+        try{ document.execCommand("copy"); done(); } finally { ta.remove(); }
+      }
+    });
+  });
+  OP.boot();
+})();
+</script>
+</body>
+</html>

@@ -1,11 +1,15 @@
 # WCTC Deep Research App
 
-Researches every unique person in your World Cup Trading Championships table using Perplexity's most capable research model (`sonar-deep-research` via its async API, reasoning effort high). Each person gets four markdown fields stored in a local SQLite database (`wctc.db`):
+Researches every unique person in your World Cup Trading Championships table using Perplexity's most capable research model (`sonar-deep-research` via its async API, reasoning effort high). Each person gets these fields stored in a local SQLite database (`wctc.db`):
 
 - **biography** — concise, 1–2 paragraphs
+- **country** — found during research ("Unknown" if unverifiable)
+- **tags** — comma-separated filtering tags from two sources: discipline tags derived automatically from your CSV's Event column (free, applied to everyone at `init`), merged with style tags found during research (systematic, discretionary, author, educator, multiple-wins...)
 - **studies** — short explanation, then a long bullet list of hyperlinked resources
 - **teaches_resources** — short explanation, then every course/book/channel they offer, hyperlinked
 - **free_resources** — short explanation, then a long hyperlinked list of free alternatives
+
+Country and tags appear in the CSV export, the JSON export, and the dashboard — where tags become clickable filter chips and search also matches countries and tags. People researched before this feature exists will have event-derived tags but no country/style tags until re-researched (`requeue`).
 
 ---
 
@@ -63,17 +67,23 @@ python wctc_research.py retry-errors  # re-queue everyone whose job failed
 
 To browse the raw database, install DB Browser for SQLite (https://sqlitebrowser.org) and open `wctc.db`.
 
-## 6. The dashboard
+## 6. The website — "The One Percent"
 
-A visual way to browse everything, no server needed:
+A multi-page site to browse everything visually, no server needed:
 
 ```bash
 python wctc_research.py export-json
 ```
 
-This writes `wctc_data.js` (and `wctc_data.json`). Keep `dashboard.html` in the same folder and double-click it — it opens in your browser. You get a searchable leaderboard of all traders sorted by best return, filters for researched/not-yet, and a full report view per person: win record, biography, and the three resource sections with clickable links.
+This writes `wctc_data.js` (and `wctc_data.json`). Keep these site files in the same folder and double-click **index.html**:
 
-Whenever new research finishes, run `export-json` again and refresh the page. (Internet is needed the first time the page loads, to fetch fonts and the React library.)
+- **index.html** — home: headline stats and the all-time podium
+- **podiums.html** — top-3 podium graphics filtered by market category (futures / forex / stocks / options) and by year
+- **insights.html** — which trading strategies champions actually use, most common tags, and countries (built from completed research)
+- **explorer.html** — the full table: filter by year, trading style, place, and country, search names/bios/tags, and click any row to read the complete research report
+- **styles.css / app-common.js** — shared styling and helpers (keep them next to the pages)
+
+Whenever new research finishes, run `export-json` again and refresh. (Internet is needed on first load for fonts and icons.)
 
 ---
 
@@ -115,9 +125,27 @@ What `requeue` does, step by step:
 | `export` | Write `WCTC_Research_Report.md` + `wctc_results.csv` from finished people. |
 | `export-json` | Write `wctc_data.js`/`.json` for the dashboard (`dashboard.html`). |
 | `retry-errors` | Re-queue all failed people. |
+| `repair` | Re-parse stored reports to fix rows corrupted by an old parser (e.g. report text dumped into tags). Free — no API calls. Unrecoverable rows are moved to `error` for re-research. |
+| `thin` | List finished reports whose resource lists are below the minimums, worst first, with a ready-to-copy requeue command. |
+| `thin --limit N` | Same, but only the N worst reports — fix thin reports in affordable batches. |
 | `requeue "Name" ...` | Re-queue specific people by name to re-research them (costs credits). |
 
 ## Cost tuning
 
 - `REASONING_EFFORT` in the script: `"high"` = maximum depth. `"medium"` roughly halves cost per query.
 - Your hard spending cap in the Perplexity dashboard is the ultimate safety net: if hit, jobs pause, nothing is lost, and the script resumes once you add credits.
+
+## Quality control: the resource lists
+
+Every section must end with a hyperlinked resource list meeting these minimums: **studies ≥ 10 links, teaches ≥ 8, free resources ≥ 15** (configurable via `MIN_LINKS` at the top of the script). Each section's links serve a distinct purpose: **studies** links point to the actual learning material the trader learned from (books, programs, mentors' works — so you can get the same education); **teaches** links point to everything the trader made available to the public, free or paid; **free resources** links point to free ways to learn the same skills. For obscure traders the model fills lists with clearly-labeled discipline-level resources instead of leaving them short — always real links, never invented ones.
+
+Links that teach nothing are banned from lists: the championship's own website, standings/leaderboard pages, social-media promos, and news that merely reports results. The `thin` audit also detects these junk links in finished reports (shown as `junk:N`).
+
+While a batch runs, each finished report prints its per-section link counts, flagged with `<< THIN` if any section is below minimum. To audit everything already researched:
+
+```bash
+python wctc_research.py thin             # every report needing attention, worst first
+python wctc_research.py thin --limit 10  # only the 10 worst
+```
+
+Reports are sorted by score (missing links + junk links, shown as `(-N)` per row), so the worst offenders come first. Each run prints the exact `requeue` command for the reports shown — with `--limit`, that command covers only those N, letting you fix the worst in small, affordable batches (re-research one batch, run `thin` again, repeat). Re-researching costs credits, so it never happens automatically — you decide.
