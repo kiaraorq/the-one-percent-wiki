@@ -1,5 +1,31 @@
 /* The One Percent — shared helpers (loaded after wctc_data.js) */
 window.OP = (function () {
+  // apply the saved theme immediately, before first paint, to avoid flashing
+  const THEME_KEY = "op-theme";
+  try {
+    if (localStorage.getItem(THEME_KEY) === "dark")
+      document.documentElement.dataset.theme = "dark";
+  } catch (e) {}
+
+  const isDark = () => document.documentElement.dataset.theme === "dark";
+  const syncThemeButtons = () => {
+    document.querySelectorAll("[data-theme-toggle]").forEach((b) => {
+      b.innerHTML = isDark()
+        ? '<i data-lucide="sun" class="lucide"></i>Light theme'
+        : '<i data-lucide="moon" class="lucide"></i>Dark theme';
+    });
+    if (window.lucide) lucide.createIcons();
+  };
+  const toggleTheme = () => {
+    if (isDark()) delete document.documentElement.dataset.theme;
+    else document.documentElement.dataset.theme = "dark";
+    try {
+      if (isDark()) localStorage.setItem(THEME_KEY, "dark");
+      else localStorage.removeItem(THEME_KEY);
+    } catch (e) {}
+    syncThemeButtons();
+  };
+
   const DATA = window.WCTC_DATA || { people: [], generated_at: "", model: "" };
   const people = DATA.people;
 
@@ -62,11 +88,14 @@ window.OP = (function () {
       });
       document.addEventListener("click", (e) => { if (!menu.contains(e.target)) close(); });
       document.addEventListener("keydown", (e) => { if (e.key === "Escape") close(); });
+      const tbtn = menu.querySelector("[data-theme-toggle]");
+      if (tbtn) tbtn.addEventListener("click", (e) => { e.stopPropagation(); toggleTheme(); });
     }
+    syncThemeButtons();
     if (window.lucide) lucide.createIcons();
   };
 
   return { DATA, people, DISCIPLINES, disciplineOfEvent, fmtPct, bestPct, linkCount,
            totalLinks, yearsOfWin, allYears, allCountries, allPlaces,
-           bestWinFiltered, placeClass, boot };
+           bestWinFiltered, placeClass, boot, toggleTheme };
 })();

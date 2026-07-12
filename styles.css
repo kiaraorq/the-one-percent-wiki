@@ -10,12 +10,34 @@
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth}
+
+/* ---- dark theme ---- */
+[data-theme="dark"]{
+  --canvas:#0f141c; --surface:#171e29; --ink:#e9eef5; --muted:#93a1b3;
+  --line:#26303f; --navy:#1e4066; --navy-deep:#132b47;
+  --gold:#d4ad5c; --gold-soft:#33290f; --silver:#9aa7b5; --bronze:#c08a52;
+  --blue:#6ea1f7; --blue-soft:#1b2940;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px -12px rgba(0,0,0,.5);
+}
+[data-theme="dark"] .md li{border-bottom-color:#222c3a}
+[data-theme="dark"] .md tbody td{border-bottom-color:#222c3a}
+[data-theme="dark"] .md tbody tr:nth-child(even) td{background:#1b2330}
+[data-theme="dark"] table.data tr.click:hover td{background:#1b2330}
+[data-theme="dark"] .task{border-bottom-color:#222c3a}
+[data-theme="dark"] .add-task{background:#131a24}
+[data-theme="dark"] .prompt-body{background:#131a24;color:#c3cfdd}
+[data-theme="dark"] .place-1{background:#33290f;color:#d4ad5c}
+[data-theme="dark"] .place-2{background:#232c37;color:#9aa7b5}
+[data-theme="dark"] .place-3{background:#2f2415;color:#c08a52}
+[data-theme="dark"] .place-x{background:var(--canvas);color:var(--muted)}
+[data-theme="dark"] ::selection{background:#2a3a58}
 body{background:var(--canvas);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.55}
 ::selection{background:var(--blue-soft)}
 a{color:var(--blue);text-decoration:none}
 a:hover{text-decoration:underline}
 button{font:inherit;cursor:pointer}
-input,select{font:inherit}
+input,select,textarea{font:inherit;color:var(--ink)}
+::placeholder{color:var(--muted);opacity:1}
 :focus-visible{outline:2px solid var(--blue);outline-offset:2px;border-radius:4px}
 .num{font-variant-numeric:tabular-nums}
 .wrap{max-width:1200px;margin:0 auto;padding:0 24px}
@@ -33,7 +55,22 @@ nav{background:var(--surface);border-bottom:1px solid var(--line);position:stick
   color:var(--muted);font-weight:500;font-size:14px}
 .nav-links a:hover{background:var(--canvas);color:var(--ink);text-decoration:none}
 .nav-links a.on{background:var(--blue-soft);color:var(--blue);font-weight:600}
-@media(max-width:640px){.nav-links a span{display:none}.nav-in{gap:12px}}
+/* tablet (e.g. iPad Mini): keep the wordmark, drop link labels to icons */
+@media(max-width:920px){
+  .nav-links a span{display:none}
+  .nav-links a{padding:8px 11px}
+  .nav-in{gap:18px}
+}
+@media(max-width:640px){
+  .nav-in{gap:6px;padding:0 12px}
+  .mark{font-size:0;gap:0}                 /* hide wordmark text, keep the 1% monogram */
+  .mark .mono{font-size:12px}
+  .nav-links{gap:2px;margin-left:auto}
+  .nav-links a{padding:8px 9px}
+  .profile{margin-left:0}
+  .profile-btn{padding:6px 8px}
+  .profile-btn .chev{display:none}         /* icon-only profile button on mobile */
+}
 
 /* ---- profile dropdown ---- */
 .profile{position:relative;margin-left:8px}
@@ -47,10 +84,10 @@ nav{background:var(--surface);border-bottom:1px solid var(--line);position:stick
   border:1px solid var(--line);border-radius:12px;box-shadow:0 12px 32px -8px rgba(14,27,44,.25);
   padding:6px;display:none;z-index:50}
 .profile-menu.open{display:block}
-.profile-menu a{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;
-  color:var(--ink);font-size:14px;font-weight:500}
-.profile-menu a:hover{background:var(--canvas);text-decoration:none}
-.profile-menu a .lucide{color:var(--blue)}
+.profile-menu a,.profile-menu button{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;
+  color:var(--ink);font-size:14px;font-weight:500;width:100%;border:none;background:none;text-align:left}
+.profile-menu a:hover,.profile-menu button:hover{background:var(--canvas);text-decoration:none}
+.profile-menu a .lucide,.profile-menu button .lucide{color:var(--blue)}
 
 /* ---- page head ---- */
 .page-head{padding:40px 0 8px}
@@ -69,9 +106,14 @@ nav{background:var(--surface);border-bottom:1px solid var(--line);position:stick
 
 /* ---- controls ---- */
 .controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:20px 0}
-.seg{display:inline-flex;background:var(--surface);border:1px solid var(--line);border-radius:11px;padding:3px;box-shadow:var(--shadow)}
-.seg button{border:none;background:none;padding:7px 15px;border-radius:8px;color:var(--muted);font-weight:500;font-size:13.5px;display:flex;align-items:center;gap:7px}
+.seg{display:inline-flex;background:var(--surface);border:1px solid var(--line);border-radius:11px;padding:3px;box-shadow:var(--shadow);max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.seg::-webkit-scrollbar{display:none}
+.seg button{border:none;background:none;padding:7px 15px;border-radius:8px;color:var(--muted);font-weight:500;font-size:13.5px;display:flex;align-items:center;gap:7px;white-space:nowrap;flex-shrink:0}
 .seg button.on{background:var(--navy);color:#fff;font-weight:600}
+@media(max-width:640px){
+  .seg button{padding:7px 11px;font-size:12.5px;gap:5px}
+  .seg button .lucide{display:none}        /* text-only chips on phones */
+}
 .field{display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line);
   border-radius:11px;padding:8px 13px;box-shadow:var(--shadow);color:var(--muted)}
 .field select,.field input{border:none;background:none;color:var(--ink);font-size:14px;outline:none;min-width:0}
@@ -101,7 +143,19 @@ nav{background:var(--surface);border-bottom:1px solid var(--line);position:stick
 .step.p3 .base{height:78px;border-top:3px solid var(--bronze);animation-delay:.16s}
 @keyframes rise{from{transform:translateY(24px);opacity:0}to{transform:translateY(0);opacity:1}}
 @media(prefers-reduced-motion:reduce){.step .base{animation:none}}
-@media(max-width:640px){.step .nm{font-size:13px}.step .ret{font-size:15px}}
+/* mobile: keep the three pedestals side by side, just smaller */
+@media(max-width:640px){
+  .podium{grid-template-columns:1fr 1fr 1fr;gap:8px;margin:24px auto 8px}
+  .step .medal{width:34px;height:34px;margin-bottom:8px}
+  .step .medal .lucide{width:15px;height:15px}
+  .step .nm{font-size:12.5px}
+  .step .ret{font-size:14px}
+  .step .sub{font-size:10.5px}
+  .step.p1 .base{height:112px}
+  .step.p2 .base{height:78px}
+  .step.p3 .base{height:58px}
+  .step .base{font-size:18px;border-radius:10px 10px 0 0}
+}
 .podium-order{display:contents}
 
 /* ---- runners-up list ---- */

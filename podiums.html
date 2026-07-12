@@ -32,87 +32,83 @@
     </button>
     <div class="profile-menu">
       <a href="myroadmap.html"><i data-lucide="route" class="lucide"></i>My Roadmap</a>
+      <button data-theme-toggle><i data-lucide="moon" class="lucide"></i>Dark theme</button>
     </div>
   </div>
 </div></nav>
 
 <div class="wrap">
-  <div class="page-head"><h1>Insights</h1>
-    <p>Patterns across the researched champions: the strategies they actually use, the most common
-    profile tags, and where they come from. Based on completed research reports.</p></div>
-  <div id="stage" style="margin-top:8px"></div>
-  <div class="footer" id="foot"></div>
+  <div class="page-head"><h1>Podiums</h1>
+    <p>Top performers ranked by best net return. Pick a market category, a year, or both.</p></div>
+  <div class="controls">
+    <div class="seg" id="disc-seg"></div>
+    <label class="field"><i data-lucide="calendar" class="lucide"></i>
+      <select id="year-sel"><option value="">All years</option></select></label>
+  </div>
+  <div id="stage"></div>
 </div>
 
 <script>
 (function(){
-  const {people} = OP;
-  const done = people.filter(p=>p.status==="done");
-  const stage = document.getElementById("stage");
+  const {people, DISCIPLINES, fmtPct, bestWinFiltered} = OP;
+  let disc = "", year = "";
 
-  if(!done.length){
-    stage.innerHTML = `<div class="card empty"><b>No research completed yet.</b><br><br>
-      Insights are built from the tags found during research. Run
-      <b>python wctc_research.py run</b>, then <b>export-json</b>, and reload.</div>`;
-    OP.boot(); return;
+  const seg = document.getElementById("disc-seg");
+  const segBtns = [["","All markets","globe"], ...DISCIPLINES.map(([k,l])=>[k,l,
+      k==="futures"?"candlestick-chart":k==="forex"?"repeat":k==="stocks"?"line-chart":"layers"])];
+  seg.innerHTML = segBtns.map(([k,l,ic])=>
+    `<button data-k="${k}" class="${k===disc?"on":""}"><i data-lucide="${ic}" class="lucide"></i>${l}</button>`).join("");
+  seg.addEventListener("click",e=>{
+    const b=e.target.closest("button"); if(!b) return;
+    disc=b.dataset.k; [...seg.children].forEach(x=>x.classList.toggle("on",x===b)); render();
+  });
+
+  const ysel = document.getElementById("year-sel");
+  OP.allYears.forEach(y=>{const o=document.createElement("option");o.value=y;o.textContent=y;ysel.appendChild(o);});
+  ysel.addEventListener("change",()=>{year=ysel.value;render();});
+
+  function render(){
+    const ranked = people
+      .map(p=>({p, win: bestWinFiltered(p, disc||null, year||null)}))
+      .filter(x=>x.win)
+      .sort((a,b)=>b.win.pct-a.win.pct);
+    const stage = document.getElementById("stage");
+    if(!ranked.length){
+      stage.innerHTML = `<div class="card empty"><b>No results for this combination.</b><br>
+        Some categories only exist in certain years — try widening a filter.</div>`;
+      OP.boot(); return;
+    }
+    const top3 = ranked.slice(0,3);
+    const order = [top3[1],top3[0],top3[2]];
+    const cls = ["p2","p1","p3"], medal=["2","1","3"];
+    const rest = ranked.slice(3,10);
+    stage.innerHTML = `
+      <div class="podium">
+        ${order.map((x,i)=> x ? `
+          <div class="step ${cls[i]}">
+            <div class="who">
+              <div class="medal"><i data-lucide="medal" class="lucide"></i></div>
+              <div class="nm" title="${x.p.name}">${x.p.name}</div>
+              <div class="ret num">+${fmtPct(x.win.pct)}%</div>
+              <div class="sub" title="${x.win.event}">${x.win.year} · ${x.win.event}</div>
+            </div>
+            <div class="base">${medal[i]}</div>
+          </div>` : `<div></div>`).join("")}
+      </div>
+      ${rest.length?`
+      <div class="card ranks">
+        <div class="section-title"><i data-lucide="list-ordered" class="lucide"></i>Next in line</div>
+        ${rest.map((x,i)=>`
+          <div class="rankrow">
+            <span class="pos num">${i+4}</span>
+            <span class="nm">${x.p.name}</span>
+            <span class="ev">${x.win.year} · ${x.win.event}</span>
+            <span class="ret num">+${fmtPct(x.win.pct)}%</span>
+          </div>`).join("")}
+      </div>`:""}`;
+    OP.boot();
   }
-
-  // strategy tags = the style vocabulary the model assigns from research
-  const STRATEGY = ["systematic","algorithmic","discretionary","technical-analysis",
-                    "fundamental","day-trading","swing-trading"];
-  const freq = list => {
-    const f={};
-    list.forEach(p=>(p.tags||[]).forEach(t=>f[t]=(f[t]||0)+1));
-    return f;
-  };
-  const tagFreq = freq(done);
-  const strategies = STRATEGY.map(t=>[t,tagFreq[t]||0]).filter(([,n])=>n>0)
-                             .sort((a,b)=>b[1]-a[1]);
-  const commonTags = Object.entries(tagFreq).sort((a,b)=>b[1]-a[1]).slice(0,12);
-  const countries = {};
-  done.forEach(p=>{ if(p.country && p.country!=="Unknown") countries[p.country]=(countries[p.country]||0)+1; });
-  const countryRows = Object.entries(countries).sort((a,b)=>b[1]-a[1]).slice(0,12);
-
-  const bars = (rows, denom) => rows.map(([lbl,n])=>`
-    <div class="barrow">
-      <span class="lbl" title="${lbl}">${lbl.replace(/-/g," ")}</span>
-      <span class="track"><span class="fill" style="width:${Math.round(n/denom*100)}%"></span></span>
-      <span class="n num">${n}</span>
-    </div>`).join("");
-
-  const maxS = strategies.length?strategies[0][1]:1;
-  const maxT = commonTags.length?commonTags[0][1]:1;
-  const maxC = countryRows.length?countryRows[0][1]:1;
-
-  stage.innerHTML = `
-    <div class="kpis">
-      <div class="card kpi"><div class="ic"><i data-lucide="file-search" class="lucide"></i></div>
-        <div><div class="k">Reports analyzed</div><div class="v num">${done.length}</div></div></div>
-      <div class="card kpi"><div class="ic"><i data-lucide="tags" class="lucide"></i></div>
-        <div><div class="k">Distinct tags found</div><div class="v num">${Object.keys(tagFreq).length}</div></div></div>
-      <div class="card kpi"><div class="ic"><i data-lucide="globe" class="lucide"></i></div>
-        <div><div class="k">Countries represented</div><div class="v num">${Object.keys(countries).length}</div></div></div>
-    </div>
-
-    <div class="card" style="margin-top:18px">
-      <div class="section-title"><i data-lucide="target" class="lucide"></i>Trading strategies in use</div>
-      <div class="bars">${strategies.length?bars(strategies,maxS):
-        `<div class="empty">No strategy tags yet — they appear as research completes.</div>`}</div>
-    </div>
-
-    <div class="card" style="margin-top:18px">
-      <div class="section-title"><i data-lucide="tags" class="lucide"></i>Most common tags</div>
-      <div class="bars">${bars(commonTags,maxT)}</div>
-    </div>
-
-    <div class="card" style="margin-top:18px;margin-bottom:6px">
-      <div class="section-title"><i data-lucide="globe" class="lucide"></i>Countries</div>
-      <div class="bars">${countryRows.length?bars(countryRows,maxC):
-        `<div class="empty">Countries appear as research completes.</div>`}</div>
-    </div>`;
-  document.getElementById("foot").textContent =
-    `Counts reflect the ${done.length} researched champions; pending traders are excluded.`;
-  OP.boot();
+  render();
 })();
 </script>
 </body>

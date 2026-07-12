@@ -42,7 +42,8 @@
   .iconbtn:hover{background:var(--canvas);color:var(--blue)}
   .iconbtn.danger:hover{color:#d9534f}
   .edit-input{flex:1;font:inherit;font-family:var(--disp);font-weight:700;font-size:17px;
-    border:1px solid var(--blue);border-radius:8px;padding:4px 10px;min-width:0}
+    border:1px solid var(--blue);border-radius:8px;padding:4px 10px;min-width:0;
+    background:var(--surface);color:var(--ink)}
 
   .task{display:flex;align-items:center;gap:12px;padding:10px 20px;border-bottom:1px solid #eef1f5}
   .task:last-of-type{border-bottom:none}
@@ -56,6 +57,20 @@
   .add-task{display:flex;gap:8px;padding:12px 20px;background:#fbfcfe;border-top:1px solid var(--line)}
   .add-task input{flex:1;border:1px solid var(--line);border-radius:9px;padding:8px 12px;font-size:13.5px;background:var(--surface)}
   .no-tasks{padding:18px 20px;color:var(--muted);font-size:13.5px}
+
+  /* drag & drop */
+  .grip{border:none;background:none;color:var(--line);width:26px;height:30px;display:grid;
+    place-items:center;flex-shrink:0;cursor:grab;padding:0;touch-action:none}
+  .grip:hover{color:var(--muted)}
+  .grip:active{cursor:grabbing}
+  .dragging{opacity:.45}
+  .drag-ghost{position:fixed;z-index:100;pointer-events:none;opacity:.92;margin:0;
+    box-shadow:0 12px 32px -8px rgba(14,27,44,.35);border-radius:12px;background:var(--surface)}
+  .drop-above{box-shadow:inset 0 3px 0 var(--gold)}
+  .drop-below{box-shadow:inset 0 -3px 0 var(--gold)}
+  .section-card.drop-above{box-shadow:0 -3px 0 var(--gold), var(--shadow)}
+  .section-card.drop-below{box-shadow:0 3px 0 var(--gold), var(--shadow)}
+  .drop-into{outline:2px dashed var(--gold);outline-offset:-2px}
 </style>
 </head>
 <body>
@@ -75,6 +90,7 @@
     </button>
     <div class="profile-menu">
       <a href="myroadmap.html"><i data-lucide="route" class="lucide"></i>My Roadmap</a>
+      <button data-theme-toggle><i data-lucide="moon" class="lucide"></i>Dark theme</button>
     </div>
   </div>
 </div></nav>
@@ -139,8 +155,9 @@
       const p = pct(sec);
       const editingSec = editing && editing.kind==="sec" && editing.sid===sec.id;
       return `
-      <div class="card section-card" data-sid="${sec.id}">
+      <div class="card section-card" data-sid="${sec.id}" draggable="true">
         <div class="sec-head">
+          <button class="grip" data-grip title="Drag to reorder"><i data-lucide="grip-vertical" class="lucide"></i></button>
           ${editingSec
             ? `<input class="edit-input" data-edit-sec value="${esc(sec.name)}" maxlength="120">`
             : `<span class="name">${esc(sec.name)}</span>`}
@@ -152,7 +169,8 @@
         ${sec.tasks.length ? sec.tasks.map(t=>{
           const editingTask = editing && editing.kind==="task" && editing.tid===t.id;
           return `
-          <div class="task" data-tid="${t.id}">
+          <div class="task" data-tid="${t.id}" draggable="true">
+            <button class="grip" data-grip title="Drag to reorder"><i data-lucide="grip-vertical" class="lucide"></i></button>
             <button class="check ${t.done?"done":""}" data-act="toggle" title="${t.done?"Mark not done":"Mark done"}">
               ${t.done?'<i data-lucide="check" class="lucide"></i>':""}
             </button>
@@ -243,6 +261,157 @@
       editing=null; save(); render();
     }
   });
+
+  // ---------- drag & drop reordering (mouse via HTML5 DnD, touch via touch events) ----------
+  let drag = null;          // {type:'sec'|'task', sid, tid}
+  let gripArmed = false;
+
+  const clearMarks = () => document.querySelectorAll(".drop-above,.drop-below,.drop-into")
+    .forEach(el=>el.classList.remove("drop-above","drop-below","drop-into"));
+
+  // find what's under (x,y) and where the dragged item would land
+  function locateDrop(x, y){
+    const el = document.elementFromPoint(x, y);
+    if(!el || !drag) return null;
+    if(drag.type==="sec"){
+      const over = el.closest(".section-card");
+      if(!over || over.dataset.sid===drag.sid) return null;
+      const r = over.getBoundingClientRect();
+      return {kind:"sec", el:over, pos: y < r.top + r.height/2 ? "above":"below"};
+    }
+    const overTask = el.closest(".task");
+    if(overTask && overTask.dataset.tid!==drag.tid){
+      const r = overTask.getBoundingClientRect();
+      return {kind:"task", el:overTask, pos: y < r.top + r.height/2 ? "above":"below"};
+    }
+    const overSec = el.closest(".section-card");
+    if(overSec) return {kind:"into", el:overSec};
+    return null;
+  }
+
+  function showMark(target){
+    clearMarks();
+    if(!target) return;
+    target.el.classList.add(target.kind==="into" ? "drop-into" : "drop-"+target.pos);
+  }
+
+  // mutate state according to a drop target; returns true if something moved
+  function applyDrop(target){
+    if(!target || !drag) return false;
+    if(drag.type==="sec"){
+      const from = state.sections.findIndex(s=>s.id===drag.sid);
+      const [moved] = state.sections.splice(from,1);
+      let to = state.sections.findIndex(s=>s.id===target.el.dataset.sid);
+      if(target.pos==="below") to += 1;
+      state.sections.splice(to,0,moved);
+      return true;
+    }
+    const fromSec = findSec(drag.sid);
+    const taskIdx = fromSec.tasks.findIndex(t=>t.id===drag.tid);
+    if(target.kind==="task"){
+      const toSec = findSec(target.el.closest("[data-sid]").dataset.sid);
+      const [moved] = fromSec.tasks.splice(taskIdx,1);
+      let to = toSec.tasks.findIndex(t=>t.id===target.el.dataset.tid);
+      if(target.pos==="below") to += 1;
+      toSec.tasks.splice(to,0,moved);
+      return true;
+    }
+    if(target.kind==="into"){
+      const toSec = findSec(target.el.dataset.sid);
+      if(toSec===fromSec && taskIdx===fromSec.tasks.length-1) return false;
+      const [moved] = fromSec.tasks.splice(taskIdx,1);
+      toSec.tasks.push(moved);
+      return true;
+    }
+    return false;
+  }
+
+  function startDragFrom(el){
+    const taskEl = el.closest(".task");
+    const secEl  = el.closest(".section-card");
+    if(taskEl){
+      drag = {type:"task", sid: taskEl.closest("[data-sid]").dataset.sid, tid: taskEl.dataset.tid};
+      taskEl.classList.add("dragging");
+      return taskEl;
+    }
+    if(secEl){
+      drag = {type:"sec", sid: secEl.dataset.sid};
+      secEl.classList.add("dragging");
+      return secEl;
+    }
+    return null;
+  }
+
+  function endDrag(){
+    drag=null; gripArmed=false; clearMarks();
+    document.querySelectorAll(".dragging").forEach(el=>el.classList.remove("dragging"));
+  }
+
+  // --- mouse path (HTML5 drag & drop) ---
+  $("#sections").addEventListener("mousedown", e=>{ gripArmed = !!e.target.closest("[data-grip]"); });
+
+  $("#sections").addEventListener("dragstart", e=>{
+    if(!gripArmed || !startDragFrom(e.target)){ e.preventDefault(); return; }
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/plain", "");     // required by Firefox
+  });
+  $("#sections").addEventListener("dragover", e=>{
+    if(!drag) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    showMark(locateDrop(e.clientX, e.clientY));
+  });
+  $("#sections").addEventListener("drop", e=>{
+    if(!drag) return;
+    e.preventDefault();
+    if(applyDrop(locateDrop(e.clientX, e.clientY))) save();
+    endDrag(); render();
+  });
+  $("#sections").addEventListener("dragend", endDrag);
+
+  // --- touch path (phones/tablets) ---
+  let ghost = null, lastTarget = null, touchActive = false;
+
+  $("#sections").addEventListener("touchstart", e=>{
+    const grip = e.target.closest("[data-grip]");
+    if(!grip) return;
+    const src = startDragFrom(grip);
+    if(!src) return;
+    touchActive = true;
+    const r = src.getBoundingClientRect();
+    ghost = src.cloneNode(true);
+    ghost.className += " drag-ghost";
+    ghost.style.width = r.width+"px";
+    document.body.appendChild(ghost);
+    const t = e.touches[0];
+    moveGhost(t.clientX, t.clientY);
+  }, {passive:true});
+
+  function moveGhost(x, y){
+    if(ghost){ ghost.style.left = (x - 20)+"px"; ghost.style.top = (y - 24)+"px"; }
+  }
+
+  $("#sections").addEventListener("touchmove", e=>{
+    if(!touchActive || !drag) return;
+    e.preventDefault();                              // stop page scroll while dragging
+    const t = e.touches[0];
+    moveGhost(t.clientX, t.clientY);
+    // auto-scroll near screen edges so long roadmaps are reachable
+    if(t.clientY < 90) window.scrollBy(0, -10);
+    else if(t.clientY > window.innerHeight - 90) window.scrollBy(0, 10);
+    lastTarget = locateDrop(t.clientX, t.clientY);
+    showMark(lastTarget);
+  }, {passive:false});
+
+  function finishTouch(){
+    if(!touchActive) return;
+    if(applyDrop(lastTarget)) save();
+    if(ghost){ ghost.remove(); ghost=null; }
+    lastTarget=null; touchActive=false;
+    endDrag(); render();
+  }
+  $("#sections").addEventListener("touchend", finishTouch);
+  $("#sections").addEventListener("touchcancel", finishTouch);
 
   render();
   OP.boot();
